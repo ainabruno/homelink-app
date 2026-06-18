@@ -10,6 +10,7 @@ import NetworkConfiguration from "./pages/NetworkConfiguration";
 import DevicesList from "./pages/DevicesList";
 import ConnectionHistory from "./pages/ConnectionHistory";
 import SecuritySettings from "./pages/SecuritySettings";
+import Notifications from "./pages/Notifications";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -70,6 +71,13 @@ function Router() {
             {() => (
               <DashboardLayout>
                 <SecuritySettings />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/notifications">
+            {() => (
+              <DashboardLayout>
+                <Notifications />
               </DashboardLayout>
             )}
           </Route>
