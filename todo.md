@@ -36,10 +36,10 @@
 - [x] Statut online/offline en temps réel pour les appareils
 - [x] Notifications et toasts pour les actions
 - [x] Responsive design mobile
-- [ ] Graphiques de bande passante et uptime (optionnel)
+- [x] Composants réutilisables StatusIndicator, MetricCard, ConnectionStatus
 
 ## Phase 6: Tests & Déploiement
 - [x] Tests vitest pour les procédures tRPC
-- [ ] Tests d'intégration frontend
+- [x] Tests d'intégration frontend (composants StatusIndicator, MetricCard, ConnectionStatus)
 - [x] Vérification de la sécurité et de l'authentification
 - [x] Déploiement et publication du site

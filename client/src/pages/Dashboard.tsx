@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import { StatusIndicator, MetricCard } from "@/components/StatusIndicator";
 import { trpc } from "@/lib/trpc";
 import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
@@ -52,75 +53,30 @@ export default function Dashboard() {
       {/* Network Status Cards */}
       {primaryNetwork ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Status */}
-          <Card className="border-neon-cyan p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">État du Réseau</p>
-                <p className="text-2xl font-bold mt-2">
-                  {primaryNetwork.isActive ? (
-                    <span className="status-online">
-                      <CheckCircle className="w-5 h-5" />
-                      Actif
-                    </span>
-                  ) : (
-                    <span className="status-offline">
-                      <AlertCircle className="w-5 h-5" />
-                      Inactif
-                    </span>
-                  )}
-                </p>
-              </div>
-              <Wifi className="w-8 h-8 neon-cyan" />
-            </div>
-          </Card>
-
-          {/* Health */}
-          <Card className="border-neon-green p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Santé Réseau</p>
-                <p className="text-2xl font-bold mt-2">
-                  {primaryNetwork.isHealthy ? (
-                    <span className="status-online">
-                      <CheckCircle className="w-5 h-5" />
-                      Sain
-                    </span>
-                  ) : (
-                    <span className="status-idle">
-                      <AlertCircle className="w-5 h-5" />
-                      Vérification
-                    </span>
-                  )}
-                </p>
-              </div>
-              <Activity className="w-8 h-8 neon-green" />
-            </div>
-          </Card>
-
-          {/* VPN Subnet */}
-          <Card className="border-neon-cyan p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Subnet VPN</p>
-                <p className="text-lg font-mono mt-2 break-all">
-                  {primaryNetwork.vpnSubnet}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 neon-cyan" />
-            </div>
-          </Card>
-
-          {/* Listen Port */}
-          <Card className="border-neon-green p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Port d'écoute</p>
-                <p className="text-2xl font-bold mt-2">{primaryNetwork.listenPort}</p>
-              </div>
-              <Users className="w-8 h-8 neon-green" />
-            </div>
-          </Card>
+          <MetricCard
+            label="État du Réseau"
+            value={primaryNetwork.isActive ? "Actif" : "Inactif"}
+            icon={<Wifi className="w-8 h-8" />}
+            className="border-neon-cyan"
+          />
+          <MetricCard
+            label="Santé Réseau"
+            value={primaryNetwork.isHealthy ? "Sain" : "Vérification"}
+            icon={<Activity className="w-8 h-8" />}
+            className="border-neon-green"
+          />
+          <MetricCard
+            label="Subnet VPN"
+            value={primaryNetwork.vpnSubnet}
+            icon={<TrendingUp className="w-8 h-8" />}
+            className="border-neon-cyan"
+          />
+          <MetricCard
+            label="Port d'écoute"
+            value={primaryNetwork.listenPort}
+            icon={<Users className="w-8 h-8" />}
+            className="border-neon-green"
+          />
         </div>
       ) : (
         <Card className="border-neon-cyan p-8 text-center">
