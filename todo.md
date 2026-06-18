@@ -118,3 +118,10 @@
 - [x] Ajouter les animations fluides entre les étapes
 - [x] Créer les boutons d'action pour chaque étape
 - [x] Tester et déployer le tutoriel d'onboarding
+
+
+## Phase 14: Correction du Flux de Logout et Landing Page
+- [x] Corriger la redirection après logout (vers landing page au lieu de /notifications)
+- [x] Créer une page d'accueil publique avec bouton "Commencer" (login)
+- [x] Protéger les routes du dashboard (redirection si pas authentifié)
+- [x] Tester le flux complet de login/logout

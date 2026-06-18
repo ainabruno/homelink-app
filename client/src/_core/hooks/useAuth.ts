@@ -26,7 +26,13 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logout = useCallback(async () => {
     try {
-      await logoutMutation.mutateAsync();
+      const result = await logoutMutation.mutateAsync();
+      utils.auth.me.setData(undefined, null);
+      await utils.auth.me.invalidate();
+      // Rediriger vers la page d'accueil après logout
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+      }
     } catch (error: unknown) {
       if (
         error instanceof TRPCClientError &&
@@ -67,7 +73,7 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
 
-    window.location.href = redirectPath
+    window.location.href = redirectPath;
   }, [
     redirectOnUnauthenticated,
     redirectPath,

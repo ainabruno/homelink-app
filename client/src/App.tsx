@@ -33,82 +33,112 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 }
 
 function Router() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Switch>
       {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/payment-success" component={PaymentSuccess} />
 
-      {/* Protected Routes with Dashboard Layout */}
-      {isAuthenticated && (
-        <>
-          <Route path="/dashboard">
-            {() => (
+      {/* Protected Routes with Dashboard Layout - Always registered, ProtectedRoute handles auth */}
+      <Route path="/dashboard">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <Dashboard />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/networks">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/networks">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <NetworkConfiguration />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/devices">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/devices">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <DevicesList />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/history">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/history">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <ConnectionHistory />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/settings">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/settings">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <SecuritySettings />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/notifications">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/notifications">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <Notifications />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/groups">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/groups">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <DeviceGroups />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/vpn-client">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/vpn-client">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <VPNClient />
               </DashboardLayout>
             )}
-          </Route>
-          <Route path="/speed-test">
-            {() => (
+          />
+        )}
+      </Route>
+      <Route path="/speed-test">
+        {() => (
+          <ProtectedRoute
+            component={() => (
               <DashboardLayout>
                 <NetworkSpeedTest />
               </DashboardLayout>
             )}
-          </Route>
-        </>
-      )}
+          />
+        )}
+      </Route>
 
       {/* 404 */}
       <Route path="/404" component={NotFound} />
