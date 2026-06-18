@@ -85,3 +85,15 @@
 - [x] Intégration dans le sidebar avec lien vers /groups
 - [ ] Intégration des groupes dans la page DevicesList (assigner appareils aux groupes)
 - [ ] Affichage des statistiques par groupe sur le Dashboard
+
+
+## Phase 11: Solution Complète WireGuard sur Raspberry Pi
+- [x] Guide d'installation du serveur WireGuard sur Raspberry Pi (WIREGUARD_SETUP_GUIDE.md)
+- [x] Guide de configuration de la redirection de port sur Tenda F3 (TENDA_F3_PORT_FORWARDING.md)
+- [x] Page Client VPN intégrée dans l'app HomeLink (/vpn-client)
+- [x] Générateur de configuration client dans HomeLink
+- [x] Téléchargement et copie de configuration .conf
+- [x] Simulation de connexion VPN
+- [x] Instructions de test et vérification (TESTING_GUIDE.md)
+- [x] Dépannage complet et checklist
+- [x] Intégration dans le sidebar avec icône Globe

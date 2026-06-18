@@ -12,6 +12,7 @@ import ConnectionHistory from "./pages/ConnectionHistory";
 import SecuritySettings from "./pages/SecuritySettings";
 import Notifications from "./pages/Notifications";
 import DeviceGroups from "./pages/DeviceGroups";
+import VPNClient from "./pages/VPNClient";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -86,6 +87,13 @@ function Router() {
             {() => (
               <DashboardLayout>
                 <DeviceGroups />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/vpn-client">
+            {() => (
+              <DashboardLayout>
+                <VPNClient />
               </DashboardLayout>
             )}
           </Route>

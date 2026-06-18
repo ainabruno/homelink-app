@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Bell, Wifi, Lock } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Bell, Wifi, Lock, Globe } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -33,6 +33,7 @@ const menuItems = [
   { icon: Wifi, label: "Réseaux", path: "/networks" },
   { icon: Users, label: "Appareils", path: "/devices" },
   { icon: Users, label: "Groupes", path: "/groups" },
+  { icon: Globe, label: "Client VPN", path: "/vpn-client" },
   { icon: Bell, label: "Historique", path: "/history" },
   { icon: Lock, label: "Sécurité", path: "/settings" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
