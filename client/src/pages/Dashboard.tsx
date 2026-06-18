@@ -1,15 +1,19 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusIndicator, MetricCard } from "@/components/StatusIndicator";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useNotificationPoller } from "@/hooks/useNotificationPoller";
 import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+
+  // Enable notification polling
+  useNotificationPoller(true, 5000);
 
   // Fetch networks
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();

@@ -54,3 +54,15 @@
 - [x] Copie de la configuration dans le presse-papiers
 - [x] Téléchargement du fichier .conf
 - [x] Instructions d'installation dans le modal
+
+
+## Phase 8: Système de Notifications Visuelles
+- [x] Table notifications en DB avec types d'événements
+- [x] API tRPC pour notifications (getUnread, getAll, getCount, markAsRead, markAllAsRead)
+- [x] Composant NotificationBell avec popover et badge de compteur
+- [x] Composant NotificationPanel pour afficher toutes les notifications
+- [x] Intégration du NotificationBell dans le DashboardLayout (mobile et desktop)
+- [x] Hook useNotificationPoller pour le polling des notifications en temps réel
+- [x] Toasts automatiques lors de nouvelles notifications
+- [x] Gestion des types de notifications (device_connected, device_disconnected, etc.)
+- [x] Icônes et couleurs pour chaque type de notification

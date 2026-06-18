@@ -128,11 +128,40 @@ export type Log = typeof logs.$inferSelect;
 export type InsertLog = typeof logs.$inferInsert;
 
 /**
+ * Notifications table: Notifications visuelles pour l'administrateur
+ * Alerte lors de nouvelles connexions et événements importants
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  networkId: int("networkId").references(() => networks.id, { onDelete: "cascade" }),
+  deviceId: int("deviceId").references(() => devices.id, { onDelete: "cascade" }),
+  type: mysqlEnum("type", ["device_connected", "device_disconnected", "connection_failed", "network_created", "device_added", "security_alert"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  isRead: boolean("isRead").notNull().default(false),
+  icon: varchar("icon", { length: 50 }), // lucide-react icon name
+  color: varchar("color", { length: 20 }).default("cyan"), // cyan, green, red, yellow
+  actionUrl: varchar("actionUrl", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  readAt: timestamp("readAt"),
+}, (table) => ({
+  userIdIdx: index("idx_notifications_userId").on(table.userId),
+  networkIdIdx: index("idx_notifications_networkId").on(table.networkId),
+  deviceIdIdx: index("idx_notifications_deviceId").on(table.deviceId),
+  isReadIdx: index("idx_notifications_isRead").on(table.isRead),
+}));
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
  * Relations pour Drizzle ORM
  */
 export const usersRelations = relations(users, ({ many }) => ({
   networks: many(networks),
   logs: many(logs),
+  notifications: many(notifications),
 }));
 
 export const networksRelations = relations(networks, ({ one, many }) => ({
@@ -172,5 +201,20 @@ export const logsRelations = relations(logs, ({ one }) => ({
   network: one(networks, {
     fields: [logs.networkId],
     references: [networks.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  network: one(networks, {
+    fields: [notifications.networkId],
+    references: [networks.id],
+  }),
+  device: one(devices, {
+    fields: [notifications.deviceId],
+    references: [devices.id],
   }),
 }));

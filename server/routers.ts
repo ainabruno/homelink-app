@@ -23,6 +23,14 @@ import {
   createLog,
 } from "./db";
 import {
+  createNotification,
+  getUnreadNotifications,
+  getAllNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  getNotificationCount,
+} from "./notifications";
+import {
   generateWireGuardKeyPair,
   generatePresharedKey,
   generateClientConfig,
@@ -413,6 +421,32 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         return getLogsByUserId(ctx.user.id, input.limit || 100);
       }),
+  }),
+
+  notifications: router({
+    getUnread: protectedProcedure.query(async ({ ctx }) => {
+      return getUnreadNotifications(ctx.user.id);
+    }),
+
+    getAll: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        return getAllNotifications(ctx.user.id, input.limit || 50);
+      }),
+
+    getCount: protectedProcedure.query(async ({ ctx }) => {
+      return getNotificationCount(ctx.user.id);
+    }),
+
+    markAsRead: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return markNotificationAsRead(input.notificationId);
+      }),
+
+    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+      return markAllNotificationsAsRead(ctx.user.id);
+    }),
   }),
 });
 

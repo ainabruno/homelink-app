@@ -15,6 +15,13 @@
       "when": 1781776224679,
       "tag": "0001_broad_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781777648840,
+      "tag": "0002_cynical_thunderbolts",
+      "breakpoints": true
     }
   ]
 }
