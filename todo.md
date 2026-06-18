@@ -108,3 +108,13 @@
 - [x] Intégration au menu sidebar avec lien "/speed-test"
 - [x] Indicateurs de qualité (excellent, good, fair, poor)
 - [x] Statistiques agrégées (moyenne, max, min)
+
+
+## Phase 13: Tutoriel d'Onboarding Interactif
+- [x] Créer le composant OnboardingModal avec 5 étapes
+- [x] Ajouter le système de progression avec barres visuelles
+- [x] Implémenter le stockage localStorage pour l'état d'onboarding
+- [x] Intégrer la modale au Dashboard pour les nouveaux utilisateurs
+- [x] Ajouter les animations fluides entre les étapes
+- [x] Créer les boutons d'action pour chaque étape
+- [x] Tester et déployer le tutoriel d'onboarding

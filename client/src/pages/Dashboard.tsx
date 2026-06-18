@@ -9,6 +9,7 @@ import { useNotificationPoller } from "@/hooks/useNotificationPoller";
 import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
+import OnboardingModal from "@/components/OnboardingModal";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -48,7 +49,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <>
+      <OnboardingModal />
+      <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <h1 className="text-4xl font-bold neon-cyan">HomeLink Dashboard</h1>
@@ -186,5 +189,6 @@ export default function Dashboard() {
         </div>
       </Card>
     </div>
+    </>
   );
 }
