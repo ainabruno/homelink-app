@@ -97,3 +97,14 @@
 - [x] Instructions de test et vérification (TESTING_GUIDE.md)
 - [x] Dépannage complet et checklist
 - [x] Intégration dans le sidebar avec icône Globe
+
+
+## Phase 12: Outil de Test de Vitesse Réseau
+- [x] Table speedTests en DB avec colonnes ping, download, upload, jitter, packetLoss, quality
+- [x] Helpers DB pour créer, lister et analyser les tests de vitesse
+- [x] API tRPC pour speedtest (create, getHistory, getLatest, getStats)
+- [x] Page NetworkSpeedTest avec simulation de test et historique
+- [x] Graphiques Recharts pour tendances ping et bande passante
+- [x] Intégration au menu sidebar avec lien "/speed-test"
+- [x] Indicateurs de qualité (excellent, good, fair, poor)
+- [x] Statistiques agrégées (moyenne, max, min)

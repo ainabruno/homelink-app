@@ -13,6 +13,7 @@ import SecuritySettings from "./pages/SecuritySettings";
 import Notifications from "./pages/Notifications";
 import DeviceGroups from "./pages/DeviceGroups";
 import VPNClient from "./pages/VPNClient";
+import NetworkSpeedTest from "./pages/NetworkSpeedTest";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -94,6 +95,13 @@ function Router() {
             {() => (
               <DashboardLayout>
                 <VPNClient />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/speed-test">
+            {() => (
+              <DashboardLayout>
+                <NetworkSpeedTest />
               </DashboardLayout>
             )}
           </Route>

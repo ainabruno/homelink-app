@@ -41,6 +41,13 @@ import {
   isValidWireGuardEndpoint,
 } from "./wireguard";
 import {
+  createSpeedTest,
+  getSpeedTests,
+  getLatestSpeedTest,
+  getSpeedTestStats,
+  getQualityRating,
+} from "./speedtest";
+import {
   createDeviceGroup,
   getGroupsByNetworkId,
   getGroupById,
@@ -582,6 +589,50 @@ export const appRouter = router({
         }
         return getGroupStats(input.groupId);
       }),
+  }),
+
+  // ========== SPEED TESTS ==========
+  speedtest: router({
+    create: protectedProcedure
+      .input(z.object({
+        networkId: z.number().optional(),
+        ping: z.number(),
+        downloadSpeed: z.number(),
+        uploadSpeed: z.number(),
+        jitter: z.number().optional(),
+        packetLoss: z.number().optional(),
+        testServer: z.string().optional(),
+        vpnConnected: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const quality = getQualityRating(input.ping, input.downloadSpeed, input.uploadSpeed);
+        return createSpeedTest({
+          userId: ctx.user.id,
+          networkId: input.networkId || null,
+          ping: input.ping.toString(),
+          downloadSpeed: input.downloadSpeed.toString(),
+          uploadSpeed: input.uploadSpeed.toString(),
+          jitter: input.jitter ? input.jitter.toString() : null,
+          packetLoss: input.packetLoss ? input.packetLoss.toString() : null,
+          testServer: input.testServer,
+          vpnConnected: input.vpnConnected || false,
+          quality,
+        });
+      }),
+
+    getHistory: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        return getSpeedTests(ctx.user.id, input.limit || 50);
+      }),
+
+    getLatest: protectedProcedure.query(async ({ ctx }) => {
+      return getLatestSpeedTest(ctx.user.id);
+    }),
+
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      return getSpeedTestStats(ctx.user.id);
+    }),
   }),
 });
 

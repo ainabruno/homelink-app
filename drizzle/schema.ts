@@ -274,3 +274,37 @@ export const deviceGroupMembersRelations = relations(deviceGroupMembers, ({ one 
     references: [devices.id],
   }),
 }));
+
+
+/**
+ * Speed Tests table: Historique des tests de vitesse réseau
+ * Stocke les résultats des tests ping, download, upload
+ */
+export const speedTests = mysqlTable("speedTests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  networkId: int("networkId").references(() => networks.id, { onDelete: "set null" }),
+  ping: decimal("ping", { precision: 10, scale: 2 }).notNull(), // en ms
+  downloadSpeed: decimal("downloadSpeed", { precision: 10, scale: 2 }).notNull(), // en Mbps
+  uploadSpeed: decimal("uploadSpeed", { precision: 10, scale: 2 }).notNull(), // en Mbps
+  jitter: decimal("jitter", { precision: 10, scale: 2 }), // en ms
+  packetLoss: decimal("packetLoss", { precision: 5, scale: 2 }), // en %
+  testServer: varchar("testServer", { length: 255 }), // Serveur de test utilisé
+  vpnConnected: boolean("vpnConnected").notNull().default(false), // Test avec/sans VPN
+  quality: mysqlEnum("quality", ["excellent", "good", "fair", "poor"]).notNull().default("good"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SpeedTest = typeof speedTests.$inferSelect;
+export type InsertSpeedTest = typeof speedTests.$inferInsert;
+
+export const speedTestsRelations = relations(speedTests, ({ one }) => ({
+  user: one(users, {
+    fields: [speedTests.userId],
+    references: [users.id],
+  }),
+  network: one(networks, {
+    fields: [speedTests.networkId],
+    references: [networks.id],
+  }),
+}));
