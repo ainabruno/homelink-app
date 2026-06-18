@@ -156,6 +156,43 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
 
 /**
+ * Device Groups table: Groupes d'appareils pour catégorisation
+ * Permet de catégoriser les appareils (Mobiles, Ordinateurs, IoT, etc.)
+ */
+export const deviceGroups = mysqlTable("deviceGroups", {
+  id: int("id").autoincrement().primaryKey(),
+  networkId: int("networkId").notNull().references(() => networks.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", ["mobile", "computer", "iot", "other"]).notNull().default("other"),
+  color: varchar("color", { length: 20 }).default("cyan"),
+  icon: varchar("icon", { length: 50 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  networkIdIdx: index("idx_deviceGroups_networkId").on(table.networkId),
+}));
+
+export type DeviceGroup = typeof deviceGroups.$inferSelect;
+export type InsertDeviceGroup = typeof deviceGroups.$inferInsert;
+
+/**
+ * Device Group Members table: Relation many-to-many entre appareils et groupes
+ */
+export const deviceGroupMembers = mysqlTable("deviceGroupMembers", {
+  id: int("id").autoincrement().primaryKey(),
+  groupId: int("groupId").notNull().references(() => deviceGroups.id, { onDelete: "cascade" }),
+  deviceId: int("deviceId").notNull().references(() => devices.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  groupIdIdx: index("idx_deviceGroupMembers_groupId").on(table.groupId),
+  deviceIdIdx: index("idx_deviceGroupMembers_deviceId").on(table.deviceId),
+}));
+
+export type DeviceGroupMember = typeof deviceGroupMembers.$inferSelect;
+export type InsertDeviceGroupMember = typeof deviceGroupMembers.$inferInsert;
+
+/**
  * Relations pour Drizzle ORM
  */
 export const usersRelations = relations(users, ({ many }) => ({
@@ -215,6 +252,25 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
   device: one(devices, {
     fields: [notifications.deviceId],
+    references: [devices.id],
+  }),
+}));
+
+export const deviceGroupsRelations = relations(deviceGroups, ({ one, many }) => ({
+  network: one(networks, {
+    fields: [deviceGroups.networkId],
+    references: [networks.id],
+  }),
+  members: many(deviceGroupMembers),
+}));
+
+export const deviceGroupMembersRelations = relations(deviceGroupMembers, ({ one }) => ({
+  group: one(deviceGroups, {
+    fields: [deviceGroupMembers.groupId],
+    references: [deviceGroups.id],
+  }),
+  device: one(devices, {
+    fields: [deviceGroupMembers.deviceId],
     references: [devices.id],
   }),
 }));

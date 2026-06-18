@@ -75,3 +75,13 @@
 - [x] Intégration dans le Dashboard avec polling automatique (5 secondes)
 - [x] Affichage des statistiques (moyenne, pic, distribution par appareil)
 - [x] Responsive design pour les graphiques
+
+
+## Phase 10: Système de Groupes d'Appareils
+- [x] Schéma DB pour deviceGroups et deviceGroupMembers avec relations
+- [x] Helpers DB pour créer, lister, mettre à jour et supprimer les groupes
+- [x] API tRPC complète pour la gestion des groupes (list, create, update, delete, addDevice, removeDevice, getDevices, getStats)
+- [x] Page DeviceGroups avec interface de gestion des groupes
+- [x] Intégration dans le sidebar avec lien vers /groups
+- [ ] Intégration des groupes dans la page DevicesList (assigner appareils aux groupes)
+- [ ] Affichage des statistiques par groupe sur le Dashboard

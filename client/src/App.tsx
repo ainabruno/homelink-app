@@ -11,6 +11,7 @@ import DevicesList from "./pages/DevicesList";
 import ConnectionHistory from "./pages/ConnectionHistory";
 import SecuritySettings from "./pages/SecuritySettings";
 import Notifications from "./pages/Notifications";
+import DeviceGroups from "./pages/DeviceGroups";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -78,6 +79,13 @@ function Router() {
             {() => (
               <DashboardLayout>
                 <Notifications />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/groups">
+            {() => (
+              <DashboardLayout>
+                <DeviceGroups />
               </DashboardLayout>
             )}
           </Route>

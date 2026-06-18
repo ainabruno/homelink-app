@@ -1,0 +1,109 @@
+  // ========== DEVICE GROUPS ==========
+  groups: router({
+    list: protectedProcedure
+      .input(z.object({ networkId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return getGroupsByNetworkId(input.networkId);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        networkId: z.number(),
+        name: z.string().min(1).max(100),
+        description: z.string().optional(),
+        category: z.enum(["mobile", "computer", "iot", "other"]),
+        color: z.string().optional(),
+        icon: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return createDeviceGroup(input);
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        groupId: z.number(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        category: z.enum(["mobile", "computer", "iot", "other"]).optional(),
+        color: z.string().optional(),
+        icon: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        const { groupId, ...updates } = input;
+        return updateDeviceGroup(groupId, updates);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ groupId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        return deleteDeviceGroup(input.groupId);
+      }),
+
+    addDevice: protectedProcedure
+      .input(z.object({ groupId: z.number(), deviceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        return addDeviceToGroup(input.groupId, input.deviceId);
+      }),
+
+    removeDevice: protectedProcedure
+      .input(z.object({ groupId: z.number(), deviceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        return removeDeviceFromGroup(input.groupId, input.deviceId);
+      }),
+
+    getDevices: protectedProcedure
+      .input(z.object({ groupId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        return getGroupDevices(input.groupId);
+      }),
+
+    getStats: protectedProcedure
+      .input(z.object({ groupId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const group = await getGroupById(input.groupId);
+        if (!group) throw new Error("Group not found");
+        const network = await getNetworkById(group.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+        return getGroupStats(input.groupId);
+      }),
+  }),

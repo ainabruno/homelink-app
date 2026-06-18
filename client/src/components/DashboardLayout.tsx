@@ -32,6 +32,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Wifi, label: "Réseaux", path: "/networks" },
   { icon: Users, label: "Appareils", path: "/devices" },
+  { icon: Users, label: "Groupes", path: "/groups" },
   { icon: Bell, label: "Historique", path: "/history" },
   { icon: Lock, label: "Sécurité", path: "/settings" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
