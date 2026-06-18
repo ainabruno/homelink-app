@@ -1,0 +1,45 @@
+# HomeLink - WireGuard VPN Dashboard TODO
+
+## Phase 1: Backend & Database Schema
+- [x] Schéma de base de données complet (networks, devices, connections, audit_logs)
+- [x] Modèles Drizzle pour WireGuard et gestion réseau
+- [x] Migration SQL pour initialiser les tables
+- [x] Helpers de requête DB pour networks, devices, connections
+
+## Phase 2: Backend API - WireGuard & Networking
+- [x] Génération de clés WireGuard (public/private)
+- [x] Génération de fichiers .conf pour clients
+- [x] Gestion des configurations WireGuard (activation/désactivation)
+- [x] Support DDNS (stockage hostname, résolution IP, timestamp)
+- [x] API tRPC pour networks (create, update, delete, list)
+- [x] API tRPC pour devices (create, update, delete, list, get_config)
+- [x] API tRPC pour connections (list, filter, get_history)
+- [x] API tRPC pour security (audit_log, session_management)
+
+## Phase 3: Frontend - Authentication & Layout
+- [x] Intégration Manus OAuth complète
+- [x] DashboardLayout avec sidebar responsive
+- [x] Navigation principale (Dashboard, Networks, Devices, History, Settings)
+- [x] Thème cyberpunk sombre (navy + cyan + green neon)
+- [x] Système de couleurs CSS variables pour le thème
+
+## Phase 4: Frontend - Dashboard & Pages
+- [x] Page Dashboard : indicateurs de santé réseau, appareils actifs, bande passante, uptime
+- [x] Page Network Configuration : ajout/édition IP publique ou DDNS
+- [x] Page Device Management : liste des appareils, ajout nouveau device, révocation accès
+- [x] Page Connection History : tableau des connexions avec filtrage
+- [x] Page Security Settings : gestion des credentials, timeout sessions, audit log
+- [x] Composants réutilisables : cartes de statut, indicateurs, graphiques
+
+## Phase 5: Frontend - Features Avancées
+- [x] Génération et téléchargement de fichiers .conf
+- [x] Statut online/offline en temps réel pour les appareils
+- [x] Notifications et toasts pour les actions
+- [x] Responsive design mobile
+- [ ] Graphiques de bande passante et uptime (optionnel)
+
+## Phase 6: Tests & Déploiement
+- [x] Tests vitest pour les procédures tRPC
+- [ ] Tests d'intégration frontend
+- [x] Vérification de la sécurité et de l'authentification
+- [x] Déploiement et publication du site

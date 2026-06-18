@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, networks, devices, connections, logs, Network, Device, Connection, Log } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,225 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ========== NETWORKS ==========
+
+export async function createNetwork(data: {
+  userId: number;
+  name: string;
+  serverPrivateKey: string;
+  serverPublicKey: string;
+  vpnSubnet?: string;
+  listenPort?: number;
+}): Promise<Network> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(networks).values({
+    userId: data.userId,
+    name: data.name,
+    serverPrivateKey: data.serverPrivateKey,
+    serverPublicKey: data.serverPublicKey,
+    vpnSubnet: data.vpnSubnet || "10.191.143.0/24",
+    listenPort: data.listenPort || 51820,
+  });
+
+  const networkId = (result as any).insertId;
+  const created = await db.select().from(networks).where(eq(networks.id, networkId)).limit(1);
+  return created[0]!;
+}
+
+export async function getNetworksByUserId(userId: number): Promise<Network[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(networks).where(eq(networks.userId, userId));
+}
+
+export async function getNetworkById(networkId: number): Promise<Network | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(networks).where(eq(networks.id, networkId)).limit(1);
+  return result[0];
+}
+
+export async function updateNetwork(networkId: number, data: Partial<Network>): Promise<Network> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(networks).set(data).where(eq(networks.id, networkId));
+  const updated = await db.select().from(networks).where(eq(networks.id, networkId)).limit(1);
+  return updated[0]!;
+}
+
+export async function deleteNetwork(networkId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(networks).where(eq(networks.id, networkId));
+}
+
+// ========== DEVICES ==========
+
+export async function createDevice(data: {
+  networkId: number;
+  name: string;
+  vpnIp: string;
+  privateKey: string;
+  publicKey: string;
+  presharedKey?: string;
+  description?: string;
+}): Promise<Device> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(devices).values({
+    networkId: data.networkId,
+    name: data.name,
+    vpnIp: data.vpnIp,
+    privateKey: data.privateKey,
+    publicKey: data.publicKey,
+    presharedKey: data.presharedKey,
+    description: data.description,
+  });
+
+  const deviceId = (result as any).insertId;
+  const created = await db.select().from(devices).where(eq(devices.id, deviceId)).limit(1);
+  return created[0]!;
+}
+
+export async function getDevicesByNetworkId(networkId: number): Promise<Device[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(devices).where(eq(devices.networkId, networkId));
+}
+
+export async function getDeviceById(deviceId: number): Promise<Device | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(devices).where(eq(devices.id, deviceId)).limit(1);
+  return result[0];
+}
+
+export async function updateDevice(deviceId: number, data: Partial<Device>): Promise<Device> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(devices).set(data).where(eq(devices.id, deviceId));
+  const updated = await db.select().from(devices).where(eq(devices.id, deviceId)).limit(1);
+  return updated[0]!;
+}
+
+export async function deleteDevice(deviceId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(devices).where(eq(devices.id, deviceId));
+}
+
+// ========== CONNECTIONS ==========
+
+export async function createConnection(data: {
+  deviceId: number;
+  networkId: number;
+  sourceIp: string;
+  sourceCountry?: string;
+  status?: "connected" | "disconnected" | "failed";
+}): Promise<Connection> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(connections).values({
+    deviceId: data.deviceId,
+    networkId: data.networkId,
+    sourceIp: data.sourceIp,
+    sourceCountry: data.sourceCountry,
+    status: data.status || "connected",
+  });
+
+  const connectionId = (result as any).insertId;
+  const created = await db.select().from(connections).where(eq(connections.id, connectionId)).limit(1);
+  return created[0]!;
+}
+
+export async function getConnectionsByNetworkId(networkId: number, limit: number = 100): Promise<Connection[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select()
+    .from(connections)
+    .where(eq(connections.networkId, networkId))
+    .orderBy(desc(connections.startTime))
+    .limit(limit);
+}
+
+export async function getConnectionsByDeviceId(deviceId: number, limit: number = 50): Promise<Connection[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select()
+    .from(connections)
+    .where(eq(connections.deviceId, deviceId))
+    .orderBy(desc(connections.startTime))
+    .limit(limit);
+}
+
+export async function updateConnection(connectionId: number, data: Partial<Connection>): Promise<Connection> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(connections).set(data).where(eq(connections.id, connectionId));
+  const updated = await db.select().from(connections).where(eq(connections.id, connectionId)).limit(1);
+  return updated[0]!;
+}
+
+// ========== LOGS ==========
+
+export async function createLog(data: {
+  userId?: number;
+  networkId?: number;
+  action: string;
+  details?: string;
+  ipAddress?: string;
+  status?: "success" | "error" | "warning";
+}): Promise<Log> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(logs).values({
+    userId: data.userId,
+    networkId: data.networkId,
+    action: data.action,
+    details: data.details,
+    ipAddress: data.ipAddress,
+    status: data.status || "success",
+  });
+
+  const logId = (result as any).insertId;
+  const created = await db.select().from(logs).where(eq(logs.id, logId)).limit(1);
+  return created[0]!;
+}
+
+export async function getLogsByNetworkId(networkId: number, limit: number = 100): Promise<Log[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select()
+    .from(logs)
+    .where(eq(logs.networkId, networkId))
+    .orderBy(desc(logs.timestamp))
+    .limit(limit);
+}
+
+export async function getLogsByUserId(userId: number, limit: number = 100): Promise<Log[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select()
+    .from(logs)
+    .where(eq(logs.userId, userId))
+    .orderBy(desc(logs.timestamp))
+    .limit(limit);
+}

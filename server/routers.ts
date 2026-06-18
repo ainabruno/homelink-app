@@ -1,10 +1,38 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import {
+  createNetwork,
+  getNetworksByUserId,
+  getNetworkById,
+  updateNetwork,
+  deleteNetwork,
+  createDevice,
+  getDevicesByNetworkId,
+  getDeviceById,
+  updateDevice,
+  deleteDevice,
+  getConnectionsByNetworkId,
+  getConnectionsByDeviceId,
+  createConnection,
+  updateConnection,
+  getLogsByNetworkId,
+  getLogsByUserId,
+  createLog,
+} from "./db";
+import {
+  generateWireGuardKeyPair,
+  generatePresharedKey,
+  generateClientConfig,
+  allocateVpnIp,
+  isValidIpAddress,
+  isValidDomain,
+  isValidWireGuardEndpoint,
+} from "./wireguard";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +45,375 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // ========== NETWORKS ==========
+  networks: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getNetworksByUserId(ctx.user.id);
+    }),
+
+    get: protectedProcedure
+      .input(z.object({ networkId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return network;
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        vpnSubnet: z.string().optional(),
+        listenPort: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Générer les clés WireGuard du serveur
+        const { privateKey: serverPrivateKey, publicKey: serverPublicKey } = await generateWireGuardKeyPair();
+
+        const network = await createNetwork({
+          userId: ctx.user.id,
+          name: input.name,
+          serverPrivateKey,
+          serverPublicKey,
+          vpnSubnet: input.vpnSubnet,
+          listenPort: input.listenPort,
+        });
+
+        // Log l'action
+        await createLog({
+          userId: ctx.user.id,
+          networkId: network.id,
+          action: "network_created",
+          details: `Network "${input.name}" created`,
+          status: "success",
+        });
+
+        return network;
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        networkId: z.number(),
+        name: z.string().optional(),
+        publicIp: z.string().optional(),
+        ddnsDomain: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+
+        // Valider DDNS si fourni
+        if (input.ddnsDomain && !isValidDomain(input.ddnsDomain)) {
+          throw new Error("Invalid DDNS domain");
+        }
+
+        // Valider IP publique si fournie
+        if (input.publicIp && !isValidIpAddress(input.publicIp)) {
+          throw new Error("Invalid public IP address");
+        }
+
+        const updated = await updateNetwork(input.networkId, {
+          name: input.name,
+          publicIp: input.publicIp,
+          ddnsDomain: input.ddnsDomain,
+          isActive: input.isActive,
+        });
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: input.networkId,
+          action: "network_updated",
+          details: `Network updated`,
+          status: "success",
+        });
+
+        return updated;
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ networkId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+
+        await deleteNetwork(input.networkId);
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: input.networkId,
+          action: "network_deleted",
+          details: `Network deleted`,
+          status: "success",
+        });
+
+        return { success: true };
+      }),
+  }),
+
+  // ========== DEVICES ==========
+  devices: router({
+    list: protectedProcedure
+      .input(z.object({ networkId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return getDevicesByNetworkId(input.networkId);
+      }),
+
+    get: protectedProcedure
+      .input(z.object({ deviceId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        return device;
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        networkId: z.number(),
+        name: z.string().min(1),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+
+        // Générer les clés WireGuard du client
+        const { privateKey, publicKey } = await generateWireGuardKeyPair();
+        const presharedKey = await generatePresharedKey();
+
+        // Compter les appareils existants pour allouer une IP VPN
+        const existingDevices = await getDevicesByNetworkId(input.networkId);
+        const vpnIp = allocateVpnIp(network.vpnSubnet, existingDevices.length);
+
+        const device = await createDevice({
+          networkId: input.networkId,
+          name: input.name,
+          vpnIp,
+          privateKey,
+          publicKey,
+          presharedKey,
+          description: input.description,
+        });
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: input.networkId,
+          action: "device_created",
+          details: `Device "${input.name}" created with VPN IP ${vpnIp}`,
+          status: "success",
+        });
+
+        return device;
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        deviceId: z.number(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        const updated = await updateDevice(input.deviceId, {
+          name: input.name,
+          description: input.description,
+          isActive: input.isActive,
+        });
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: device.networkId,
+          action: "device_updated",
+          details: `Device updated`,
+          status: "success",
+        });
+
+        return updated;
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ deviceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        await deleteDevice(input.deviceId);
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: device.networkId,
+          action: "device_deleted",
+          details: `Device deleted`,
+          status: "success",
+        });
+
+        return { success: true };
+      }),
+
+    getConfig: protectedProcedure
+      .input(z.object({ deviceId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        // Déterminer l'endpoint du serveur
+        const serverEndpoint = network.ddnsDomain
+          ? `${network.ddnsDomain}:${network.listenPort}`
+          : network.publicIp
+            ? `${network.publicIp}:${network.listenPort}`
+            : "0.0.0.0:51820"; // Fallback
+
+        // Générer la configuration client
+        const config = generateClientConfig({
+          clientPrivateKey: device.privateKey,
+          clientVpnIp: device.vpnIp,
+          serverPublicKey: network.serverPublicKey,
+          serverEndpoint,
+          vpnSubnet: network.vpnSubnet,
+          presharedKey: device.presharedKey || undefined,
+          dnsServers: ["8.8.8.8", "8.8.4.4"],
+        });
+
+        return {
+          config,
+          deviceName: device.name,
+        };
+      }),
+  }),
+
+  // ========== CONNECTIONS ==========
+  connections: router({
+    list: protectedProcedure
+      .input(z.object({ networkId: z.number(), limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return getConnectionsByNetworkId(input.networkId, input.limit || 100);
+      }),
+
+    listByDevice: protectedProcedure
+      .input(z.object({ deviceId: z.number(), limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        return getConnectionsByDeviceId(input.deviceId, input.limit || 50);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        deviceId: z.number(),
+        sourceIp: z.string(),
+        sourceCountry: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const device = await getDeviceById(input.deviceId);
+        if (!device) throw new Error("Device not found");
+
+        const network = await getNetworkById(device.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Access denied");
+        }
+
+        const connection = await createConnection({
+          deviceId: input.deviceId,
+          networkId: network.id,
+          sourceIp: input.sourceIp,
+          sourceCountry: input.sourceCountry,
+          status: "connected",
+        });
+
+        await createLog({
+          userId: ctx.user.id,
+          networkId: network.id,
+          action: "connection_established",
+          details: `Device "${device.name}" connected from ${input.sourceIp}`,
+          status: "success",
+        });
+
+        return connection;
+      }),
+
+    endConnection: protectedProcedure
+      .input(z.object({
+        connectionId: z.number(),
+        durationSeconds: z.number().optional(),
+        bytesReceived: z.string().optional(),
+        bytesSent: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const connection = await updateConnection(input.connectionId, {
+          endTime: new Date(),
+          durationSeconds: input.durationSeconds,
+          bytesReceived: input.bytesReceived ? input.bytesReceived : undefined,
+          bytesSent: input.bytesSent ? input.bytesSent : undefined,
+          status: "disconnected",
+        });
+
+        return connection;
+      }),
+  }),
+
+  // ========== LOGS ==========
+  logs: router({
+    list: protectedProcedure
+      .input(z.object({ networkId: z.number(), limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return getLogsByNetworkId(input.networkId, input.limit || 100);
+      }),
+
+    listByUser: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        return getLogsByUserId(ctx.user.id, input.limit || 100);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

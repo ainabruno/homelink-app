@@ -5,31 +5,88 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import NetworkConfiguration from "./pages/NetworkConfiguration";
+import DevicesList from "./pages/DevicesList";
+import ConnectionHistory from "./pages/ConnectionHistory";
+import SecuritySettings from "./pages/SecuritySettings";
+import DashboardLayout from "./components/DashboardLayout";
+import { useAuth } from "./_core/hooks/useAuth";
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Chargement...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Home />;
+  }
+
+  return <Component />;
+}
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
+  const { isAuthenticated } = useAuth();
+
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      {/* Public Routes */}
+      <Route path="/" component={Home} />
+
+      {/* Protected Routes with Dashboard Layout */}
+      {isAuthenticated && (
+        <>
+          <Route path="/dashboard">
+            {() => (
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/networks">
+            {() => (
+              <DashboardLayout>
+                <NetworkConfiguration />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/devices">
+            {() => (
+              <DashboardLayout>
+                <DevicesList />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/history">
+            {() => (
+              <DashboardLayout>
+                <ConnectionHistory />
+              </DashboardLayout>
+            )}
+          </Route>
+          <Route path="/settings">
+            {() => (
+              <DashboardLayout>
+                <SecuritySettings />
+              </DashboardLayout>
+            )}
+          </Route>
+        </>
+      )}
+
+      {/* 404 */}
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />
