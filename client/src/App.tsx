@@ -14,6 +14,7 @@ import Notifications from "./pages/Notifications";
 import DeviceGroups from "./pages/DeviceGroups";
 import VPNClient from "./pages/VPNClient";
 import NetworkSpeedTest from "./pages/NetworkSpeedTest";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -38,6 +39,7 @@ function Router() {
     <Switch>
       {/* Public Routes */}
       <Route path="/" component={Home} />
+      <Route path="/payment-success" component={PaymentSuccess} />
 
       {/* Protected Routes with Dashboard Layout */}
       {isAuthenticated && (

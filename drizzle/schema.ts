@@ -308,3 +308,132 @@ export const speedTestsRelations = relations(speedTests, ({ one }) => ({
     references: [networks.id],
   }),
 }));
+
+
+/**
+ * Plans table: Définition des plans d'abonnement
+ * Freemium, Pro, Enterprise avec quotas
+ */
+export const plans = mysqlTable("plans", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 50 }).notNull(), // "free", "pro", "enterprise"
+  displayName: varchar("displayName", { length: 100 }).notNull(), // "Gratuit", "Pro", "Enterprise"
+  description: text("description"),
+  priceAriary: int("priceAriary").notNull().default(0), // Prix en Ariary MGA
+  maxNetworks: int("maxNetworks").notNull().default(1),
+  maxDevices: int("maxDevices").notNull().default(3),
+  maxBandwidth: int("maxBandwidth"), // En GB/mois, null = illimité
+  features: text("features"), // JSON array of features
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Plan = typeof plans.$inferSelect;
+export type InsertPlan = typeof plans.$inferInsert;
+
+/**
+ * Subscriptions table: Abonnements des utilisateurs
+ * Suivi des plans actifs par utilisateur
+ */
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: int("planId").notNull().references(() => plans.id),
+  status: mysqlEnum("status", ["active", "paused", "cancelled", "expired"]).notNull().default("active"),
+  currentPeriodStart: timestamp("currentPeriodStart").notNull(),
+  currentPeriodEnd: timestamp("currentPeriodEnd").notNull(),
+  cancelledAt: timestamp("cancelledAt"),
+  autoRenew: boolean("autoRenew").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+/**
+ * Payments table: Historique des paiements Orange Money
+ * Suivi des transactions
+ */
+export const payments = mysqlTable("payments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subscriptionId: int("subscriptionId").references(() => subscriptions.id),
+  amount: int("amount").notNull(), // Montant en Ariary MGA
+  currency: varchar("currency", { length: 3 }).notNull().default("MGA"),
+  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).notNull().default("pending"),
+  paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // "orange_money", "mvola"
+  transactionId: varchar("transactionId", { length: 255 }), // ID de la transaction Orange Money
+  phoneNumber: varchar("phoneNumber", { length: 20 }), // Numéro téléphone pour le paiement
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }), // Numéro de facture
+  description: text("description"),
+  errorMessage: text("errorMessage"), // Message d'erreur si échec
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+/**
+ * Invoices table: Factures générées
+ * Historique des factures PDF
+ */
+export const invoices = mysqlTable("invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  paymentId: int("paymentId").notNull().references(() => payments.id),
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }).notNull().unique(),
+  amount: int("amount").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("MGA"),
+  status: mysqlEnum("status", ["draft", "sent", "paid", "cancelled"]).notNull().default("draft"),
+  pdfUrl: text("pdfUrl"),
+  issuedAt: timestamp("issuedAt").notNull(),
+  dueAt: timestamp("dueAt"),
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+
+// Relations
+export const plansRelations = relations(plans, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(plans, {
+    fields: [subscriptions.planId],
+    references: [plans.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one, many }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id],
+  }),
+  invoice: many(invoices),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  user: one(users, {
+    fields: [invoices.userId],
+    references: [users.id],
+  }),
+  payment: one(payments, {
+    fields: [invoices.paymentId],
+    references: [payments.id],
+  }),
+}));

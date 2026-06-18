@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -634,7 +635,139 @@ export const appRouter = router({
       return getSpeedTestStats(ctx.user.id);
     }),
   }),
-});
 
+  // ========== SUBSCRIPTIONS & PAYMENTS ==========
+  subscriptions: router({
+    getPlans: publicProcedure.query(async () => {
+      const { getAllPlans } = await import("./subscriptions");
+      return await getAllPlans();
+    }),
+
+    getCurrentPlan: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserSubscription, getPlanById } = await import("./subscriptions");
+      const subscription = await getUserSubscription(ctx.user.id);
+      if (!subscription) return null;
+      return {
+        subscription,
+        plan: await getPlanById(subscription.planId),
+      };
+    }),
+
+    upgradePlan: protectedProcedure
+      .input(z.object({ planId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getPlanById, createSubscription, getUserSubscription } = await import("./subscriptions");
+        
+        const plan = await getPlanById(input.planId);
+        if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+
+        const existingSubscription = await getUserSubscription(ctx.user.id);
+        if (existingSubscription) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "User already has an active subscription" });
+        }
+
+        const now = new Date();
+        const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+        return await createSubscription({
+          userId: ctx.user.id,
+          planId: plan.id,
+          currentPeriodStart: now,
+          currentPeriodEnd: endDate,
+          status: "active",
+        });
+      }),
+
+    cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      const { getUserSubscription, cancelSubscription } = await import("./subscriptions");
+      
+      const subscription = await getUserSubscription(ctx.user.id);
+      if (!subscription) throw new TRPCError({ code: "NOT_FOUND", message: "No active subscription" });
+
+      return await cancelSubscription(subscription.id);
+    }),
+  }),
+
+  payments: router({
+    initiatePayment: protectedProcedure
+      .input(z.object({ planId: z.number(), phoneNumber: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getPlanById, createPayment, generateInvoiceNumber } = await import("./subscriptions");
+        const { createOrangeMoneyClient } = await import("./orangemoney");
+
+        const plan = await getPlanById(input.planId);
+        if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+
+        const orderId = `ORDER-${ctx.user.id}-${Date.now()}`;
+        const invoiceNumber = await generateInvoiceNumber();
+
+        // Create payment record
+        const payment = await createPayment({
+          userId: ctx.user.id,
+          amount: plan.priceAriary,
+          currency: "MGA",
+          status: "pending",
+          paymentMethod: "orange_money",
+          phoneNumber: input.phoneNumber,
+          invoiceNumber,
+          description: `HomeLink ${plan.displayName} Plan - ${invoiceNumber}`,
+        });
+
+        if (!payment) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create payment record" });
+
+        // Initiate Orange Money payment
+        const orangeMoney = createOrangeMoneyClient();
+        const result = await orangeMoney.initiatePayment({
+          amount: plan.priceAriary,
+          phoneNumber: input.phoneNumber,
+          orderId,
+          description: `HomeLink ${plan.displayName} Plan`,
+          callbackUrl: `${process.env.VITE_FRONTEND_URL || "http://localhost:3000"}/payment-callback`,
+          notificationUrl: `${process.env.BUILT_IN_FORGE_API_URL}/webhooks/orange-money`,
+        });
+
+        if (!result.success) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.errorMessage });
+        }
+
+        return {
+          paymentId: payment.id,
+          redirectUrl: result.redirectUrl,
+          transactionId: result.transactionId,
+        };
+      }),
+
+    checkPaymentStatus: protectedProcedure
+      .input(z.object({ paymentId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getPaymentById } = await import("./subscriptions");
+        const { createOrangeMoneyClient } = await import("./orangemoney");
+
+        const payment = await getPaymentById(input.paymentId);
+        if (!payment || payment.userId !== ctx.user.id) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Payment not found" });
+        }
+
+        if (!payment.transactionId) {
+          return { status: "pending", payment };
+        }
+
+        const orangeMoney = createOrangeMoneyClient();
+        const status = await orangeMoney.checkPaymentStatus(payment.transactionId);
+
+        return { status, payment };
+      }),
+
+    getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserPayments } = await import("./subscriptions");
+      return await getUserPayments(ctx.user.id);
+    }),
+
+    getInvoices: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserInvoices } = await import("./subscriptions");
+      return await getUserInvoices(ctx.user.id);
+    }),
+  }),
+});
 
 export type AppRouter = typeof appRouter;

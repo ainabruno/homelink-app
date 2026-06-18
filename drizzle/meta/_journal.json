@@ -36,6 +36,13 @@
       "when": 1781783492384,
       "tag": "0004_silent_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1781785893717,
+      "tag": "0005_green_mesmero",
+      "breakpoints": true
     }
   ]
 }
