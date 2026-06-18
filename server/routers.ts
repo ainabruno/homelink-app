@@ -21,6 +21,7 @@ import {
   getLogsByNetworkId,
   getLogsByUserId,
   createLog,
+  getBandwidthStats,
 } from "./db";
 import {
   createNotification,
@@ -448,6 +449,20 @@ export const appRouter = router({
       return markAllNotificationsAsRead(ctx.user.id);
     }),
   }),
+
+  // ========== BANDWIDTH ==========
+  bandwidth: router({
+    getStats: protectedProcedure
+      .input(z.object({ networkId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const network = await getNetworkById(input.networkId);
+        if (!network || network.userId !== ctx.user.id) {
+          throw new Error("Network not found or access denied");
+        }
+        return getBandwidthStats(input.networkId);
+      }),
+  }),
 });
+
 
 export type AppRouter = typeof appRouter;

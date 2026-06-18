@@ -1,12 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusIndicator, MetricCard } from "@/components/StatusIndicator";
+import { BandwidthChart } from "@/components/BandwidthChart";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useNotificationPoller } from "@/hooks/useNotificationPoller";
 import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -18,6 +20,25 @@ export default function Dashboard() {
   // Fetch networks
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();
 
+  // Get primary network
+  const primaryNetwork = networks?.[0];
+
+  // Fetch bandwidth stats
+  const { data: bandwidthStats, isLoading: bandwidthLoading } = trpc.bandwidth.getStats.useQuery(
+    { networkId: primaryNetwork?.id || 0 },
+    { enabled: !!primaryNetwork }
+  );
+
+  // Auto-refresh bandwidth stats every 5 seconds
+  const utils = trpc.useUtils();
+  useEffect(() => {
+    if (!primaryNetwork) return;
+    const interval = setInterval(() => {
+      utils.bandwidth.getStats.invalidate({ networkId: primaryNetwork.id });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [primaryNetwork, utils]);
+
   if (networksLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -25,8 +46,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  const primaryNetwork = networks?.[0];
 
   return (
     <div className="space-y-8">
@@ -129,6 +148,11 @@ export default function Dashboard() {
             )}
           </div>
         </Card>
+      )}
+
+      {/* Bandwidth Charts */}
+      {primaryNetwork && bandwidthStats && (
+        <BandwidthChart data={bandwidthStats} isLoading={bandwidthLoading} />
       )}
 
       {/* Quick Links */}

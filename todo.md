@@ -66,3 +66,12 @@
 - [x] Toasts automatiques lors de nouvelles notifications
 - [x] Gestion des types de notifications (device_connected, device_disconnected, etc.)
 - [x] Icônes et couleurs pour chaque type de notification
+
+
+## Phase 9: Graphiques de Bande Passante en Temps Réel
+- [x] Helpers DB pour générer les données de bande passante (timeSeries, byDevice, statistiques)
+- [x] API tRPC bandwidth.getStats pour récupérer les statistiques
+- [x] Composant BandwidthChart avec graphiques Recharts (Area, Pie)
+- [x] Intégration dans le Dashboard avec polling automatique (5 secondes)
+- [x] Affichage des statistiques (moyenne, pic, distribution par appareil)
+- [x] Responsive design pour les graphiques

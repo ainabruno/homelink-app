@@ -311,3 +311,106 @@ export async function getLogsByUserId(userId: number, limit: number = 100): Prom
     .orderBy(desc(logs.timestamp))
     .limit(limit);
 }
+
+
+// ========== BANDWIDTH STATS ==========
+
+export interface BandwidthDataPoint {
+  timestamp: number;
+  uploadMbps: number;
+  downloadMbps: number;
+}
+
+export interface DeviceBandwidth {
+  deviceId: number;
+  deviceName: string;
+  uploadMbps: number;
+  downloadMbps: number;
+  totalMB: number;
+}
+
+export interface BandwidthStats {
+  timeSeries: BandwidthDataPoint[];
+  byDevice: DeviceBandwidth[];
+  totalUploadMbps: number;
+  totalDownloadMbps: number;
+  peakUploadMbps: number;
+  peakDownloadMbps: number;
+  averageUploadMbps: number;
+  averageDownloadMbps: number;
+}
+
+/**
+ * Generate mock bandwidth statistics for a network
+ * In production, this would aggregate real WireGuard interface stats
+ */
+export async function getBandwidthStats(networkId: number): Promise<BandwidthStats> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      timeSeries: [],
+      byDevice: [],
+      totalUploadMbps: 0,
+      totalDownloadMbps: 0,
+      peakUploadMbps: 0,
+      peakDownloadMbps: 0,
+      averageUploadMbps: 0,
+      averageDownloadMbps: 0,
+    };
+  }
+
+  try {
+    // Get devices for this network
+    const networkDevices = await db.select().from(devices).where(eq(devices.networkId, networkId));
+
+    // Generate mock time series data (last 24 data points = 2 hours with 5-min intervals)
+    const timeSeries: BandwidthDataPoint[] = [];
+    const now = Date.now();
+    for (let i = 23; i >= 0; i--) {
+      const timestamp = now - i * 5 * 60 * 1000; // 5-minute intervals
+      const uploadMbps = Math.random() * 50 + 10; // 10-60 Mbps
+      const downloadMbps = Math.random() * 80 + 20; // 20-100 Mbps
+      timeSeries.push({ timestamp, uploadMbps, downloadMbps });
+    }
+
+    // Generate per-device bandwidth data
+    const byDevice: DeviceBandwidth[] = networkDevices.map((device) => ({
+      deviceId: device.id,
+      deviceName: device.name,
+      uploadMbps: Math.random() * 30 + 5,
+      downloadMbps: Math.random() * 50 + 10,
+      totalMB: Math.random() * 5000 + 1000,
+    }));
+
+    // Calculate aggregates
+    const totalUploadMbps = byDevice.reduce((sum, d) => sum + d.uploadMbps, 0);
+    const totalDownloadMbps = byDevice.reduce((sum, d) => sum + d.downloadMbps, 0);
+    const peakUploadMbps = Math.max(...timeSeries.map((d) => d.uploadMbps), 0);
+    const peakDownloadMbps = Math.max(...timeSeries.map((d) => d.downloadMbps), 0);
+    const averageUploadMbps = timeSeries.reduce((sum, d) => sum + d.uploadMbps, 0) / timeSeries.length;
+    const averageDownloadMbps = timeSeries.reduce((sum, d) => sum + d.downloadMbps, 0) / timeSeries.length;
+
+    return {
+      timeSeries,
+      byDevice,
+      totalUploadMbps,
+      totalDownloadMbps,
+      peakUploadMbps,
+      peakDownloadMbps,
+      averageUploadMbps,
+      averageDownloadMbps,
+    };
+  } catch (error) {
+    console.error("[Database] Failed to get bandwidth stats:", error);
+    return {
+      timeSeries: [],
+      byDevice: [],
+      totalUploadMbps: 0,
+      totalDownloadMbps: 0,
+      peakUploadMbps: 0,
+      peakDownloadMbps: 0,
+      averageUploadMbps: 0,
+      averageDownloadMbps: 0,
+    };
+  }
+}
