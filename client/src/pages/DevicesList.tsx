@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfigExport } from "@/components/QRCodeViewer";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
-import { Plus, Download, Trash2, AlertCircle, CheckCircle, Smartphone } from "lucide-react";
+import { Plus, Download, Trash2, AlertCircle, CheckCircle, Smartphone, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -56,6 +57,7 @@ export default function DevicesList() {
 
   // Get config mutation
   const [configLoading, setConfigLoading] = useState(false);
+  const [selectedDeviceConfig, setSelectedDeviceConfig] = useState<{ deviceId: number; deviceName: string; config: string } | null>(null);
 
   const handleCreateDevice = () => {
     if (!selectedNetworkId) {
@@ -74,22 +76,17 @@ export default function DevicesList() {
     });
   };
 
-  const handleDownloadConfig = async (deviceId: number) => {
+  const handleShowConfig = async (deviceId: number, deviceName: string) => {
     setConfigLoading(true);
     try {
       const response = await fetch(`/api/trpc/devices.getConfig?input=${JSON.stringify({ deviceId })}`);
       if (!response.ok) throw new Error("Failed to get config");
       const data = await response.json();
-      
-      // Download .conf file
-      const element = document.createElement("a");
-      const file = new Blob([data.result.data.config], { type: "text/plain" });
-      element.href = URL.createObjectURL(file);
-      element.download = `${data.result.data.deviceName}.conf`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-      toast.success("Configuration téléchargée");
+      setSelectedDeviceConfig({
+        deviceId,
+        deviceName: data.result.data.deviceName,
+        config: data.result.data.config,
+      });
     } catch (error: any) {
       toast.error(`Erreur: ${error.message}`);
     } finally {
@@ -265,11 +262,12 @@ export default function DevicesList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownloadConfig(device.id)}
+                      onClick={() => handleShowConfig(device.id, device.name)}
                       disabled={configLoading}
-                      className="border-neon-green text-neon-green hover:bg-green-950"
+                      className="border-neon-cyan text-neon-cyan hover:bg-cyan-950"
+                      title="Afficher QR code et configuration"
                     >
-                      {configLoading ? <Spinner className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                      {configLoading ? <Spinner className="w-4 h-4" /> : <QrCode className="w-4 h-4" />}
                     </Button>
                     <Button
                       variant="outline"
@@ -293,6 +291,14 @@ export default function DevicesList() {
             </Card>
           )}
         </div>
+      )}
+
+      {/* QR Code Viewer Modal */}
+      {selectedDeviceConfig && (
+        <ConfigExport
+          deviceName={selectedDeviceConfig.deviceName}
+          configContent={selectedDeviceConfig.config}
+        />
       )}
     </div>
   );

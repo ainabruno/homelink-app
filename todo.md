@@ -43,3 +43,14 @@
 - [x] Tests d'intégration frontend (composants StatusIndicator, MetricCard, ConnectionStatus)
 - [x] Vérification de la sécurité et de l'authentification
 - [x] Déploiement et publication du site
+
+
+## Phase 7: QR Code & Configuration Export
+- [x] Installation de la dépendance qrcode.react
+- [x] Création du composant QRCodeViewer avec QR code SVG
+- [x] Intégration du composant ConfigExport dans DevicesList
+- [x] Bouton QR code pour afficher la configuration
+- [x] Téléchargement du QR code en PNG
+- [x] Copie de la configuration dans le presse-papiers
+- [x] Téléchargement du fichier .conf
+- [x] Instructions d'installation dans le modal
