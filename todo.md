@@ -155,3 +155,12 @@
 - [x] Générer les configurations client WireGuard
 - [x] Ajouter les guides d'installation pour téléphone et ordinateur
 - [x] Ajouter les liens aux menus respectifs
+
+
+## Phase 18: Génération Réelle des Clés WireGuard
+- [x] Créer le module de génération de clés (server/wireguard-keys.ts)
+- [x] Ajouter le stockage des clés dans la base de données (server/wireguard-db.ts)
+- [x] Implémenter les procédures tRPC (server/wireguard-router.ts)
+- [x] Mettre à jour WireGuardServerConfig pour utiliser les vraies clés
+- [x] Ajouter les tests vitest pour la génération de clés
+- [x] Ajouter le wireguardRouter au appRouter

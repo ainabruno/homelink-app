@@ -68,6 +68,7 @@ import {
   getUserDetails,
 } from "./admin";
 import { notifyAdminUserLogout } from "./auth-notifications";
+import { wireguardRouter } from "./wireguard-router";
 
 export const appRouter = router({
   system: systemRouter,
@@ -782,6 +783,8 @@ export const appRouter = router({
       return await getUserInvoices(ctx.user.id);
     }),
   }),
+
+  wireguard: wireguardRouter,
 
   admin: router({
     getAllUsers: protectedProcedure.query(async ({ ctx }) => {
