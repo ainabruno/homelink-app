@@ -437,3 +437,115 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
     references: [payments.id],
   }),
 }));
+
+
+/**
+ * Access Control Rules table: Règles d'accès (ACL)
+ * Définit qui peut accéder à quoi dans le réseau
+ */
+export const accessControlRules = mysqlTable("accessControlRules", {
+  id: int("id").autoincrement().primaryKey(),
+  networkId: int("networkId").notNull().references(() => networks.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(), // Ex: "Admin access", "Guest access"
+  description: text("description"),
+  sourceType: mysqlEnum("sourceType", ["user", "group", "device"]).notNull(), // Qui peut accéder
+  sourceId: int("sourceId"), // ID de l'utilisateur, groupe ou appareil
+  targetType: mysqlEnum("targetType", ["device", "group", "network"]).notNull(), // Accès à quoi
+  targetId: int("targetId"), // ID de l'appareil, groupe ou réseau
+  action: mysqlEnum("action", ["allow", "deny"]).notNull().default("allow"),
+  priority: int("priority").notNull().default(100), // Ordre d'évaluation (plus bas = plus prioritaire)
+  isActive: boolean("isActive").notNull().default(true),
+  expiresAt: timestamp("expiresAt"), // Expiration optionnelle de la règle
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AccessControlRule = typeof accessControlRules.$inferSelect;
+export type InsertAccessControlRule = typeof accessControlRules.$inferInsert;
+
+/**
+ * Security Events table: Événements de sécurité
+ * Logs des tentatives d'accès, violations, etc.
+ */
+export const securityEvents = mysqlTable("securityEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").references(() => users.id, { onDelete: "set null" }),
+  networkId: int("networkId").references(() => networks.id, { onDelete: "set null" }),
+  deviceId: int("deviceId").references(() => devices.id, { onDelete: "set null" }),
+  eventType: mysqlEnum("eventType", [
+    "login_success",
+    "login_failed",
+    "access_allowed",
+    "access_denied",
+    "device_connected",
+    "device_disconnected",
+    "config_changed",
+    "key_rotated",
+    "key_revoked",
+    "suspicious_activity",
+    "brute_force_attempt",
+  ]).notNull(),
+  severity: mysqlEnum("severity", ["info", "warning", "critical"]).notNull().default("info"),
+  sourceIp: varchar("sourceIp", { length: 45 }), // IPv4 ou IPv6
+  userAgent: text("userAgent"),
+  details: text("details"), // JSON avec détails supplémentaires
+  isResolved: boolean("isResolved").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertSecurityEvent = typeof securityEvents.$inferInsert;
+
+/**
+ * Activity Logs table: Logs d'activité complète
+ * Historique de toutes les actions dans le système
+ */
+export const activityLogs = mysqlTable("activityLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").references(() => users.id, { onDelete: "set null" }),
+  networkId: int("networkId").references(() => networks.id, { onDelete: "set null" }),
+  action: varchar("action", { length: 255 }).notNull(), // Ex: "device_added", "config_updated"
+  resourceType: varchar("resourceType", { length: 100 }).notNull(), // Ex: "device", "network", "user"
+  resourceId: int("resourceId"),
+  changes: text("changes"), // JSON avec avant/après
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = typeof activityLogs.$inferInsert;
+
+// Relations
+export const accessControlRulesRelations = relations(accessControlRules, ({ one }) => ({
+  network: one(networks, {
+    fields: [accessControlRules.networkId],
+    references: [networks.id],
+  }),
+}));
+
+export const securityEventsRelations = relations(securityEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [securityEvents.userId],
+    references: [users.id],
+  }),
+  network: one(networks, {
+    fields: [securityEvents.networkId],
+    references: [networks.id],
+  }),
+  device: one(devices, {
+    fields: [securityEvents.deviceId],
+    references: [devices.id],
+  }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [activityLogs.userId],
+    references: [users.id],
+  }),
+  network: one(networks, {
+    fields: [activityLogs.networkId],
+    references: [networks.id],
+  }),
+}));

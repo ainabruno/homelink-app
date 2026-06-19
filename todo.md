@@ -164,3 +164,61 @@
 - [x] Mettre à jour WireGuardServerConfig pour utiliser les vraies clés
 - [x] Ajouter les tests vitest pour la génération de clés
 - [x] Ajouter le wireguardRouter au appRouter
+
+
+## Phase 19: Indicateur Visuel de Statut WireGuard
+- [x] Créer la procédure tRPC getNetworkStatus pour vérifier le statut du serveur
+- [x] Ajouter l'indicateur visuel de statut (vert/jaune/rouge) sur WireGuardServerConfig
+- [x] Implémenter le polling en temps réel (5 secondes) pour mettre à jour le statut
+- [x] Afficher le nombre d'appareils connectés
+- [x] Ajouter les icônes animées pour les différents états
+
+## Phase 20: Contrôle du Serveur WireGuard
+- [x] Créer les procédures tRPC (toggleServer, restartServer) pour contrôler le serveur
+- [x] Ajouter les boutons Activer/Désactiver et Redémarrer
+- [x] Implémenter les dialogues de confirmation pour les actions sensibles
+- [x] Ajouter les notifications toast pour les résultats
+- [x] Gérer les états de chargement des boutons
+
+## Phase 21: Système ACL (Access Control List)
+- [ ] Créer les tables pour les ACL (accessControlRules, devicePermissions, groupPermissions)
+- [ ] Ajouter les procédures tRPC pour gérer les ACL
+- [ ] Créer une page admin pour configurer les ACL
+- [ ] Implémenter la vérification des permissions avant la connexion VPN
+- [ ] Ajouter les tests vitest pour les ACL
+
+## Phase 22: Monitoring Complet
+- [ ] Créer les tables pour les logs (activityLogs, connectionLogs, errorLogs, securityEvents)
+- [ ] Ajouter les procédures tRPC pour récupérer les logs
+- [ ] Créer une page admin pour afficher les logs avec filtrage
+- [ ] Implémenter les graphiques d'utilisation (bande passante, connexions, uptime)
+- [ ] Ajouter les alertes de sécurité (tentatives échouées, accès non autorisé)
+
+## Phase 23: Gestion Avancée des Clés
+- [ ] Ajouter l'expiration des clés WireGuard (configurable par admin)
+- [ ] Implémenter la rotation automatique des clés
+- [ ] Créer les procédures tRPC pour gérer l'expiration
+- [ ] Ajouter les notifications avant expiration (7 jours, 1 jour)
+- [ ] Implémenter la révocation manuelle des clés
+
+## Phase 24: Authentification Sécurisée (MFA)
+- [ ] Ajouter TOTP (Time-based One-Time Password) avec speakeasy
+- [ ] Créer une page pour configurer MFA (activation/désactivation)
+- [ ] Implémenter la vérification TOTP lors du login
+- [ ] Ajouter les codes de secours (10 codes)
+- [ ] Tester MFA avec Google Authenticator et Authy
+
+## Phase 25: Fonctionnalités Avancées
+- [ ] Implémenter les Subnet Routers (étendre le réseau)
+- [ ] Implémenter les Exit Nodes (trafic internet via VPN)
+- [ ] Ajouter la gestion des routes statiques
+- [ ] Implémenter les webhooks pour intégrations externes
+- [ ] Ajouter le support des tags pour les appareils
+
+## Phase 26: Tests et Optimisations Finales
+- [ ] Tests complets de sécurité (ACL, permissions, MFA)
+- [ ] Tests de performance avec 10 utilisateurs
+- [ ] Optimisation des requêtes tRPC
+- [ ] Vérification des logs et monitoring
+- [ ] Documentation complète pour déploiement sur Tenda F3
+- [ ] Checkpoint final et préparation pour production

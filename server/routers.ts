@@ -70,6 +70,7 @@ import {
 } from "./admin";
 import { notifyAdminUserLogout } from "./auth-notifications";
 import { wireguardRouter } from "./wireguard-router";
+import { aclRouter } from "./acl-router";
 
 export const appRouter = router({
   system: systemRouter,
@@ -786,6 +787,8 @@ export const appRouter = router({
   }),
 
   wireguard: wireguardRouter,
+
+  acl: aclRouter,
 
   deviceGroups: deviceGroupsRouter,
 
