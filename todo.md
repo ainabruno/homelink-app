@@ -83,8 +83,8 @@
 - [x] API tRPC complète pour la gestion des groupes (list, create, update, delete, addDevice, removeDevice, getDevices, getStats)
 - [x] Page DeviceGroups avec interface de gestion des groupes
 - [x] Intégration dans le sidebar avec lien vers /groups
-- [ ] Intégration des groupes dans la page DevicesList (assigner appareils aux groupes)
-- [ ] Affichage des statistiques par groupe sur le Dashboard
+- [x] Intégration des groupes dans la page DevicesList (assigner appareils aux groupes)
+- [x] Affichage des statistiques par groupe sur le Dashboard
 
 
 ## Phase 11: Solution Complète WireGuard sur Raspberry Pi

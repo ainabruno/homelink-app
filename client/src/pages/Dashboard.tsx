@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useNotificationPoller } from "@/hooks/useNotificationPoller";
-import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
+import { Activity, Wifi, Users, TrendingUp, AlertCircle, CheckCircle, Tag } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 import OnboardingModal from "@/components/OnboardingModal";
@@ -20,6 +20,9 @@ export default function Dashboard() {
 
   // Fetch networks
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();
+
+  // Fetch device groups
+  const { data: groups, isLoading: groupsLoading } = trpc.deviceGroups.list.useQuery();
 
   // Get primary network
   const primaryNetwork = networks?.[0];
@@ -156,6 +159,30 @@ export default function Dashboard() {
       {/* Bandwidth Charts */}
       {primaryNetwork && bandwidthStats && (
         <BandwidthChart data={bandwidthStats} isLoading={bandwidthLoading} />
+      )}
+
+      {/* Device Groups Statistics */}
+      {groups && groups.length > 0 && (
+        <Card className="border-neon-cyan p-6">
+          <h2 className="text-xl font-bold mb-4 neon-cyan flex items-center gap-2">
+            <Tag className="w-5 h-5" />
+            Groupes d'Appareils
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groups.map((group: any) => (
+              <div key={group.id} className="p-4 rounded border border-cyan-500/30 bg-slate-900/50 hover:bg-slate-900/70 transition">
+                <h3 className="font-semibold text-cyan-400 mb-2">{group.name}</h3>
+                {group.description && (
+                  <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Appareils</span>
+                  <span className="text-lg font-bold text-cyan-400">{group.deviceCount || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {/* Quick Links */}

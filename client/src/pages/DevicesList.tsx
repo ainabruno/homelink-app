@@ -6,10 +6,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfigExport } from "@/components/QRCodeViewer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
-import { Plus, Download, Trash2, AlertCircle, CheckCircle, Smartphone, QrCode } from "lucide-react";
+import { Plus, Download, Trash2, AlertCircle, CheckCircle, Smartphone, QrCode, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -20,6 +21,8 @@ export default function DevicesList() {
   const [selectedNetworkId, setSelectedNetworkId] = useState<number | null>(null);
   const [deviceName, setDeviceName] = useState("");
   const [deviceDescription, setDeviceDescription] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [assigningDeviceId, setAssigningDeviceId] = useState<number | null>(null);
 
   // Fetch networks
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();
@@ -29,6 +32,9 @@ export default function DevicesList() {
     { networkId: selectedNetworkId || 0 },
     { enabled: !!selectedNetworkId }
   );
+
+  // Fetch groups
+  const { data: groups, isLoading: groupsLoading } = trpc.deviceGroups.list.useQuery();
 
   // Create device mutation
   const createMutation = trpc.devices.create.useMutation({
@@ -51,6 +57,19 @@ export default function DevicesList() {
       refetchDevices();
     },
     onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Add device to group mutation
+  const addToGroupMutation = trpc.deviceGroups.addDevice.useMutation({
+    onSuccess: () => {
+      toast.success("Appareil ajouté au groupe");
+      setAssigningDeviceId(null);
+      setSelectedGroupId(null);
+      refetchDevices();
+    },
+    onError: (error: any) => {
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -98,6 +117,17 @@ export default function DevicesList() {
     if (confirm("Êtes-vous sûr de vouloir supprimer cet appareil?")) {
       deleteMutation.mutate({ deviceId });
     }
+  };
+
+  const handleAddToGroup = (deviceId: number) => {
+    if (!selectedGroupId) {
+      toast.error("Sélectionnez un groupe");
+      return;
+    }
+    addToGroupMutation.mutate({
+      groupId: selectedGroupId,
+      deviceId,
+    });
   };
 
   if (networksLoading) {
@@ -252,6 +282,53 @@ export default function DevicesList() {
                         </div>
                       )}
                     </div>
+
+                    {/* Group Assignment */}
+                    {assigningDeviceId === device.id ? (
+                      <div className="mt-4 p-4 bg-slate-900/50 rounded border border-cyan-500/30 space-y-3">
+                        <p className="text-sm font-semibold text-cyan-400">Assigner à un groupe</p>
+                        <Select value={selectedGroupId?.toString() || ""} onValueChange={(v) => setSelectedGroupId(parseInt(v))}>
+                          <SelectTrigger className="border-cyan-500/30">
+                            <SelectValue placeholder="Sélectionner un groupe" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groups?.map((group: any) => (
+                              <SelectItem key={group.id} value={group.id.toString()}>
+                                {group.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddToGroup(device.id)}
+                            disabled={addToGroupMutation.isPending}
+                            className="btn-neon-cyan flex-1"
+                          >
+                            Confirmer
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAssigningDeviceId(null)}
+                            className="flex-1"
+                          >
+                            Annuler
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setAssigningDeviceId(device.id)}
+                        className="mt-4 border-cyan-500/30 text-cyan-400 hover:bg-cyan-950/50 gap-2"
+                      >
+                        <Tag className="w-4 h-4" />
+                        Assigner à un groupe
+                      </Button>
+                    )}
 
                     <p className="text-xs text-muted-foreground mt-4">
                       Créé le: {new Date(device.createdAt).toLocaleString()}

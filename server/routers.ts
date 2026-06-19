@@ -48,6 +48,7 @@ import {
   getSpeedTestStats,
   getQualityRating,
 } from "./speedtest";
+import { deviceGroupsRouter } from "./groups";
 import {
   createDeviceGroup,
   getGroupsByNetworkId,
@@ -785,6 +786,8 @@ export const appRouter = router({
   }),
 
   wireguard: wireguardRouter,
+
+  deviceGroups: deviceGroupsRouter,
 
   admin: router({
     getAllUsers: protectedProcedure.query(async ({ ctx }) => {
