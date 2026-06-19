@@ -308,4 +308,59 @@ export const wireguardRouter = router({
         throw new Error("Failed to update last connected");
       }
     }),
+
+  getNetworkStatus: protectedProcedure
+    .input(z.object({ networkId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+
+        const network = await db
+          .select()
+          .from(networks)
+          .where(eq(networks.id, input.networkId))
+          .then((rows) => rows[0]);
+
+        if (!network || network.userId !== ctx.user?.id) {
+          throw new Error("Unauthorized");
+        }
+
+        const activeDevices = await db
+          .select()
+          .from(devices)
+          .where(eq(devices.networkId, input.networkId))
+          .then((rows) => rows.filter((d: any) => d.isActive));
+
+        const totalDevices = await db
+          .select()
+          .from(devices)
+          .where(eq(devices.networkId, input.networkId))
+          .then((rows) => rows.length);
+
+        const isConfigured = !!network.serverPrivateKey && !!network.serverPublicKey;
+        const status = isConfigured && network.isActive ? "active" : "inactive";
+
+        return {
+          success: true,
+          status,
+          isConfigured,
+          isActive: network.isActive,
+          activeDevices: activeDevices.length,
+          totalDevices,
+          lastStatusUpdate: new Date(),
+        };
+      } catch (error) {
+        console.error("[WireGuard] Get network status failed:", error);
+        return {
+          success: false,
+          status: "unknown",
+          isConfigured: false,
+          isActive: false,
+          activeDevices: 0,
+          totalDevices: 0,
+          lastStatusUpdate: new Date(),
+        };
+      }
+    }),
 });

@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Download, Copy, CheckCircle2, Loader } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, Download, Copy, CheckCircle2, Loader, Activity, Wifi, WifiOff } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function WireGuardServerConfig() {
@@ -20,6 +20,12 @@ export default function WireGuardServerConfig() {
   const { data: configData, isLoading: configLoading } = trpc.wireguard.getNetworkConfig.useQuery(
     { networkId: selectedNetworkId || 0 },
     { enabled: !!selectedNetworkId }
+  );
+
+  // Charger le statut du serveur WireGuard
+  const { data: statusData, isLoading: statusLoading, refetch: refetchStatus } = trpc.wireguard.getNetworkStatus.useQuery(
+    { networkId: selectedNetworkId || 0 },
+    { enabled: !!selectedNetworkId, refetchInterval: 5000 } // Polling toutes les 5 secondes
   );
 
   if (user?.role !== "admin") {
@@ -58,6 +64,43 @@ export default function WireGuardServerConfig() {
 
   const serverConfig = configData?.config || "";
   const selectedNetwork = networks?.find((n: any) => n.id === selectedNetworkId);
+  const status = statusData?.status || "unknown";
+  const isActive = statusData?.isActive || false;
+  const isConfigured = statusData?.isConfigured || false;
+  const activeDevices = statusData?.activeDevices || 0;
+  const totalDevices = statusData?.totalDevices || 0;
+
+  // Déterminer les couleurs et icônes selon le statut
+  const getStatusDisplay = () => {
+    switch (status) {
+      case "active":
+        return {
+          icon: <Activity className="w-5 h-5 text-green-400 animate-pulse" />,
+          label: "Actif",
+          color: "bg-green-500/20 border-green-500/30",
+          textColor: "text-green-400",
+          badge: "default",
+        };
+      case "inactive":
+        return {
+          icon: <WifiOff className="w-5 h-5 text-yellow-400" />,
+          label: "Inactif",
+          color: "bg-yellow-500/20 border-yellow-500/30",
+          textColor: "text-yellow-400",
+          badge: "secondary",
+        };
+      default:
+        return {
+          icon: <AlertCircle className="w-5 h-5 text-red-400" />,
+          label: "Inconnu",
+          color: "bg-red-500/20 border-red-500/30",
+          textColor: "text-red-400",
+          badge: "destructive",
+        };
+    }
+  };
+
+  const statusDisplay = getStatusDisplay();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-6">
@@ -67,6 +110,48 @@ export default function WireGuardServerConfig() {
           <h1 className="text-4xl font-bold neon-cyan">Configuration Serveur WireGuard</h1>
           <p className="text-muted-foreground">Générez et déployez la configuration WireGuard sur votre Raspberry Pi</p>
         </div>
+
+        {/* Status Indicator */}
+        {selectedNetworkId && (
+          <Card className={`border p-6 ${statusDisplay.color}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-slate-900/50">
+                  {statusDisplay.icon}
+                </div>
+                <div>
+                  <h3 className={`text-lg font-semibold ${statusDisplay.textColor}`}>
+                    Statut du Serveur: {statusDisplay.label}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isConfigured ? "Configuration déployée" : "Configuration non déployée"}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={statusDisplay.badge as any}>
+                {activeDevices}/{totalDevices} appareils connectés
+              </Badge>
+            </div>
+
+            {/* Statut détaillé */}
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/10">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">État du Serveur</p>
+                <p className={`text-sm font-semibold ${statusDisplay.textColor}`}>
+                  {isActive ? "En ligne" : "Hors ligne"}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Appareils Actifs</p>
+                <p className="text-sm font-semibold neon-cyan">{activeDevices}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Appareils Totaux</p>
+                <p className="text-sm font-semibold neon-cyan">{totalDevices}</p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Instructions */}
         <Card className="border-cyan-500/30 p-6 bg-cyan-950/20">
@@ -167,7 +252,7 @@ export default function WireGuardServerConfig() {
                     disabled={networksLoading}
                     className="gap-2 w-full"
                   >
-                    {networksLoading ? <Loader className="w-4 h-4 animate-spin" /> : "Charger"}
+                    {networksLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Wifi className="w-4 h-4" />}
                     Charger la configuration
                   </Button>
                 )}
