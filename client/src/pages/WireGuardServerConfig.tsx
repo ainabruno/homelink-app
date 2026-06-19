@@ -12,11 +12,15 @@ export default function WireGuardServerConfig() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [selectedNetworkId, setSelectedNetworkId] = useState<number | null>(null);
-  const [serverConfig, setServerConfig] = useState<string>("");
-  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
 
   // Récupérer les réseaux de l'utilisateur
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();
+
+  // Charger la configuration serveur pour le réseau sélectionné
+  const { data: configData, isLoading: configLoading } = trpc.wireguard.getNetworkConfig.useQuery(
+    { networkId: selectedNetworkId || 0 },
+    { enabled: !!selectedNetworkId }
+  );
 
   if (user?.role !== "admin") {
     return (
@@ -48,23 +52,12 @@ export default function WireGuardServerConfig() {
     toast.success(`${filename} téléchargé !`);
   };
 
-  // Récupérer la configuration serveur réelle
-  const getServerConfig = async (networkId: number) => {
-    setIsLoadingConfig(true);
-    try {
-      const result = await (trpc.wireguard.getNetworkConfig as any)({ networkId });
-      if (result.success) {
-        setServerConfig(result.config);
-        setSelectedNetworkId(networkId);
-        toast.success("Configuration serveur chargée !");
-      }
-    } catch (error) {
-      toast.error("Erreur lors du chargement de la configuration");
-      console.error(error);
-    } finally {
-      setIsLoadingConfig(false);
-    }
+  const handleLoadConfig = (networkId: number) => {
+    setSelectedNetworkId(networkId);
   };
+
+  const serverConfig = configData?.config || "";
+  const selectedNetwork = networks?.find((n: any) => n.id === selectedNetworkId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-6">
@@ -109,7 +102,7 @@ export default function WireGuardServerConfig() {
           {networksLoading ? (
             <Card className="p-6 text-center text-muted-foreground">Chargement...</Card>
           ) : networks && networks.length > 0 ? (
-            networks.map((network) => (
+            networks.map((network: any) => (
               <Card key={network.id} className="border-cyan-500/30 p-6 bg-slate-900/30">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -127,7 +120,7 @@ export default function WireGuardServerConfig() {
                       <label className="text-sm font-semibold text-cyan-400">Configuration Serveur (wg0.conf)</label>
                       <div className="bg-slate-950 rounded border border-cyan-500/20 p-4 font-mono text-xs overflow-x-auto max-h-96">
                         <pre className="text-green-400 whitespace-pre-wrap break-words">
-                          {serverConfig || "Chargement..."}
+                          {configLoading ? "Chargement..." : serverConfig || "Aucune configuration"}
                         </pre>
                       </div>
                       <div className="flex gap-2 flex-wrap">
@@ -135,7 +128,7 @@ export default function WireGuardServerConfig() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleCopyConfig(serverConfig)}
-                          disabled={!serverConfig}
+                          disabled={!serverConfig || configLoading}
                           className="gap-2"
                         >
                           {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -145,7 +138,7 @@ export default function WireGuardServerConfig() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDownloadConfig(serverConfig, `wg0-${network.name}.conf`)}
-                          disabled={!serverConfig}
+                          disabled={!serverConfig || configLoading}
                           className="gap-2"
                         >
                           <Download className="w-4 h-4" />
@@ -170,12 +163,12 @@ export default function WireGuardServerConfig() {
 
                 {selectedNetworkId !== network.id && (
                   <Button
-                    onClick={() => getServerConfig(network.id)}
-                    disabled={isLoadingConfig}
+                    onClick={() => handleLoadConfig(network.id)}
+                    disabled={networksLoading}
                     className="gap-2 w-full"
                   >
-                    {isLoadingConfig ? <Loader className="w-4 h-4 animate-spin" /> : "Charger"}
-                    {isLoadingConfig ? "Chargement..." : "Charger la configuration"}
+                    {networksLoading ? <Loader className="w-4 h-4 animate-spin" /> : "Charger"}
+                    Charger la configuration
                   </Button>
                 )}
               </Card>
