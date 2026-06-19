@@ -71,9 +71,10 @@ export function generateClientConfig(params: {
     dnsServers,
   } = params;
 
+  const address = clientVpnIp.includes("/") ? clientVpnIp : `${clientVpnIp}/32`;
   let config = `[Interface]
 PrivateKey = ${clientPrivateKey}
-Address = ${clientVpnIp}
+Address = ${address}
 `;
 
   if (dnsServers && dnsServers.length > 0) {
@@ -137,7 +138,8 @@ PublicKey = ${peer.publicKey}
     if (peer.presharedKey) {
       config += `PresharedKey = ${peer.presharedKey}\n`;
     }
-    config += `AllowedIPs = ${peer.vpnIp}\n`;
+    const allowedIp = peer.vpnIp.includes("/") ? peer.vpnIp : `${peer.vpnIp}/32`;
+    config += `AllowedIPs = ${allowedIp}\n`;
   }
 
   return config;
@@ -160,7 +162,7 @@ export function allocateVpnIp(vpnSubnet: string, deviceCount: number): string {
   }
 
   parts[3] = clientNumber.toString();
-  return `${parts.join(".")}/32`;
+  return parts.join(".");
 }
 
 /**

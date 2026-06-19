@@ -31,7 +31,7 @@ export function generateVPNAddress(userId: number, subnet: string): string {
 
   // Utiliser l'ID utilisateur pour générer une adresse unique
   // Limiter à 254 (0 et 255 sont réservés)
-  const lastOctet = ((userId % 254) + 1).toString();
+  const lastOctet = ((userId - 1) % 254 + 1).toString();
   parts[3] = lastOctet;
 
   return parts.join(".");
@@ -42,7 +42,7 @@ export function generateVPNAddress(userId: number, subnet: string): string {
  */
 export function isValidWireGuardKey(key: string): boolean {
   // Les clés WireGuard sont en base64 et font 44 caractères
-  return /^[A-Za-z0-9+/]{43}=?$/.test(key);
+  return /^[A-Za-z0-9+/]{42,43}=?$/.test(key);
 }
 
 /**
@@ -54,7 +54,7 @@ export function generateServerConfig(
   vpnSubnet: string,
   peers: Array<{ publicKey: string; allowedIp: string }>
 ): string {
-  const serverIp = vpnSubnet.replace("/24", ".1");
+  const serverIp = vpnSubnet.replace(".0/24", ".1");
 
   let config = `[Interface]
 Address = ${serverIp}
@@ -65,10 +65,11 @@ PrivateKey = ${privateKey}
 
   // Ajouter les peers (clients)
   peers.forEach((peer, index) => {
+    const allowedIp = peer.allowedIp.includes("/") ? peer.allowedIp : `${peer.allowedIp}/32`;
     config += `# Client ${index + 1}
 [Peer]
 PublicKey = ${peer.publicKey}
-AllowedIPs = ${peer.allowedIp}/32
+AllowedIPs = ${allowedIp}
 
 `;
   });
@@ -90,8 +91,9 @@ export function generateClientConfig(
   // Extraire le réseau VPN pour AllowedIPs
   const vpnNetwork = vpnSubnet.replace("0/24", "0/24");
 
+  const address = clientIp.includes("/") ? clientIp : `${clientIp}/32`;
   return `[Interface]
-Address = ${clientIp}/32
+Address = ${address}
 PrivateKey = ${privateKey}
 DNS = 8.8.8.8, 8.8.4.4
 

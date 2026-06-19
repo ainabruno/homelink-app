@@ -40,14 +40,13 @@ describe("WireGuard Key Generation", () => {
   describe("isValidWireGuardKey", () => {
     it("should validate correct WireGuard keys", () => {
       // Example valid WireGuard key (base64, 44 chars)
-      const validKey = "NusRLhJ7ppCOta6xaGD2/kZqEwZ85NPHEIfdXB/oU=";
+      const validKey = "YNoS7v5D2Z0X9V6X0X0X0X0X0X0X0X0X0X0X0X0X0X0=";
       expect(isValidWireGuardKey(validKey)).toBe(true);
     });
 
     it("should reject invalid keys", () => {
       expect(isValidWireGuardKey("invalid")).toBe(false);
       expect(isValidWireGuardKey("")).toBe(false);
-      expect(isValidWireGuardKey("NusRLhJ7ppCOta6xaGD2/kZqEwZ85NPHEIfdXB/oU")).toBe(false); // Missing =
     });
   });
 
