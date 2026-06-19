@@ -134,3 +134,14 @@
 - [x] Implémenter sessionStorage pour afficher le toast de connexion une seule fois par session
 - [x] Ajouter délai avant redirection pour que le toast soit visible
 - [x] Tests vitest pour les notifications toast
+
+
+## Phase 16: Interface Admin Différenciée et Notifications en Temps Réel
+- [x] Créer une interface Admin Dashboard avec tableau de bord des utilisateurs
+- [x] Ajouter les procédures tRPC admin (getAllUsers, getRecentConnections, getGlobalStats, getGlobalLogs)
+- [x] Créer la page AdminDashboard avec onglets (Utilisateurs, Connexions, Logs)
+- [x] Ajouter le lien Admin Panel au menu du DashboardLayout
+- [x] Implémenter les notifications de connexion/déconnexion pour l'admin
+- [x] Ajouter les notifications lors du login/logout OAuth
+- [ ] Tester les notifications avec 2 comptes (admin et client)
+- [ ] Implémenter la gestion automatique WireGuard

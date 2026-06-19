@@ -40,6 +40,10 @@ const menuItems = [
   { icon: Bell, label: "Notifications", path: "/notifications" },
 ];
 
+const adminMenuItems = [
+  { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
+];
+
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
@@ -55,6 +59,8 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const items = isAdmin ? [...adminMenuItems, ...menuItems] : menuItems;
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -120,7 +126,9 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const isAdmin = user?.role === "admin";
+  const items = isAdmin ? [...adminMenuItems, ...menuItems] : menuItems;
+  const activeMenuItem = items.find(item => item.path === location);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -188,7 +196,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {items.map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

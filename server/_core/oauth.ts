@@ -3,6 +3,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { notifyAdminUserLogin } from "../auth-notifications";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -35,6 +36,13 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
       });
+
+      // Récupérer l'utilisateur pour obtenir son ID
+      const dbUser = await db.getUserByOpenId(userInfo.openId);
+      if (dbUser) {
+        // Notifier l'admin de la connexion
+        await notifyAdminUserLogin(dbUser.id, userInfo.name || "Utilisateur", userInfo.email || "inconnu");
+      }
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",

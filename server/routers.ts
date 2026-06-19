@@ -60,12 +60,25 @@ import {
   getDeviceGroups,
   getGroupStats,
 } from "./groups";
+import {
+  getAllUsersWithStats,
+  getRecentConnections,
+  getGlobalStats,
+  getGlobalLogs,
+  getUserDetails,
+} from "./admin";
+import { notifyAdminUserLogout } from "./auth-notifications";
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      // Notifier l'admin de la déconnexion
+      if (ctx.user) {
+        await notifyAdminUserLogout(ctx.user.id, ctx.user.name || "Utilisateur", ctx.user.email || "inconnu");
+      }
+      
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return {
@@ -768,6 +781,49 @@ export const appRouter = router({
       const { getUserInvoices } = await import("./subscriptions");
       return await getUserInvoices(ctx.user.id);
     }),
+  }),
+
+  admin: router({
+    getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      }
+      return await getAllUsersWithStats();
+    }),
+
+    getRecentConnections: protectedProcedure
+      .input(z.object({ limit: z.number().default(50) }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        return await getRecentConnections(input.limit);
+      }),
+
+    getGlobalStats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      }
+      return await getGlobalStats();
+    }),
+
+    getGlobalLogs: protectedProcedure
+      .input(z.object({ limit: z.number().default(100) }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        return await getGlobalLogs(input.limit);
+      }),
+
+    getUserDetails: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        return await getUserDetails(input.userId);
+      }),
   }),
 });
 

@@ -15,6 +15,7 @@ import DeviceGroups from "./pages/DeviceGroups";
 import VPNClient from "./pages/VPNClient";
 import NetworkSpeedTest from "./pages/NetworkSpeedTest";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import AdminDashboard from "./pages/AdminDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -38,6 +39,19 @@ function Router() {
       {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/payment-success" component={PaymentSuccess} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin">
+        {() => (
+          <ProtectedRoute
+            component={() => (
+              <DashboardLayout>
+                <AdminDashboard />
+              </DashboardLayout>
+            )}
+          />
+        )}
+      </Route>
 
       {/* Protected Routes with Dashboard Layout - Always registered, ProtectedRoute handles auth */}
       <Route path="/dashboard">
