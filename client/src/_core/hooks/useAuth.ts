@@ -2,6 +2,7 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -29,9 +30,17 @@ export function useAuth(options?: UseAuthOptions) {
       const result = await logoutMutation.mutateAsync();
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
+      // Afficher un toast de confirmation
+      toast.success("Déconnecté avec succès", {
+        description: "À bientôt!",
+        duration: 2000,
+      });
       // Rediriger vers la page d'accueil après logout
       if (result.redirectUrl) {
-        window.location.href = result.redirectUrl;
+        // Attendre un peu pour que le toast soit visible
+        setTimeout(() => {
+          window.location.href = result.redirectUrl;
+        }, 500);
       }
     } catch (error: unknown) {
       if (
@@ -40,6 +49,9 @@ export function useAuth(options?: UseAuthOptions) {
       ) {
         return;
       }
+      toast.error("Erreur lors de la déconnexion", {
+        description: "Veuillez réessayer.",
+      });
       throw error;
     } finally {
       utils.auth.me.setData(undefined, null);
@@ -81,6 +93,23 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     state.user,
   ]);
+
+  // Afficher un toast de bienvenue après connexion
+  useEffect(() => {
+    if (state.isAuthenticated && state.user && !meQuery.isLoading) {
+      // Vérifier si c'est la première fois que l'utilisateur se connecte dans cette session
+      const hasShownLoginToast = sessionStorage.getItem(
+        "homelink-login-toast-shown"
+      );
+      if (!hasShownLoginToast) {
+        toast.success("Connecté avec succès!", {
+          description: `Bienvenue ${state.user.name || "utilisateur"}!`,
+          duration: 3000,
+        });
+        sessionStorage.setItem("homelink-login-toast-shown", "true");
+      }
+    }
+  }, [state.isAuthenticated, state.user, meQuery.isLoading]);
 
   return {
     ...state,

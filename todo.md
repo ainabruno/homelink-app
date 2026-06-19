@@ -125,3 +125,12 @@
 - [x] Créer une page d'accueil publique avec bouton "Commencer" (login)
 - [x] Protéger les routes du dashboard (redirection si pas authentifié)
 - [x] Tester le flux complet de login/logout
+
+
+## Phase 15: Notifications Toast de Connexion/Déconnexion
+- [x] Ajouter toast de succès lors de la connexion (avec nom d'utilisateur)
+- [x] Ajouter toast de succès lors de la déconnexion (avec message "À bientôt!")
+- [x] Ajouter toast d'erreur en cas d'erreur lors de la déconnexion
+- [x] Implémenter sessionStorage pour afficher le toast de connexion une seule fois par session
+- [x] Ajouter délai avant redirection pour que le toast soit visible
+- [x] Tests vitest pour les notifications toast
