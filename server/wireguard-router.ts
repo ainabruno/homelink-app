@@ -363,4 +363,77 @@ export const wireguardRouter = router({
         };
       }
     }),
+
+  toggleNetworkStatus: protectedProcedure
+    .input(z.object({ networkId: z.number(), isActive: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+
+        const network = await db
+          .select()
+          .from(networks)
+          .where(eq(networks.id, input.networkId))
+          .then((rows) => rows[0]);
+
+        if (!network || network.userId !== ctx.user?.id) {
+          throw new Error("Unauthorized");
+        }
+
+        await db
+          .update(networks)
+          .set({ isActive: input.isActive })
+          .where(eq(networks.id, input.networkId));
+
+        return {
+          success: true,
+          message: input.isActive ? "Serveur WireGuard activé" : "Serveur WireGuard désactivé",
+          isActive: input.isActive,
+        };
+      } catch (error) {
+        console.error("[WireGuard] Toggle network status failed:", error);
+        throw new Error("Failed to toggle network status");
+      }
+    }),
+
+  restartNetwork: protectedProcedure
+    .input(z.object({ networkId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+
+        const network = await db
+          .select()
+          .from(networks)
+          .where(eq(networks.id, input.networkId))
+          .then((rows) => rows[0]);
+
+        if (!network || network.userId !== ctx.user?.id) {
+          throw new Error("Unauthorized");
+        }
+
+        await db
+          .update(networks)
+          .set({ isActive: false })
+          .where(eq(networks.id, input.networkId));
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        await db
+          .update(networks)
+          .set({ isActive: true })
+          .where(eq(networks.id, input.networkId));
+
+        return {
+          success: true,
+          message: "Serveur WireGuard redémarré avec succès",
+          isActive: true,
+        };
+      } catch (error) {
+        console.error("[WireGuard] Restart network failed:", error);
+        throw new Error("Failed to restart network");
+      }
+    }),
 });

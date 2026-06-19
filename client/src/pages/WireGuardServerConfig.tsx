@@ -1,17 +1,20 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Download, Copy, CheckCircle2, Loader, Activity, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, Download, Copy, CheckCircle2, Loader, Activity, Wifi, WifiOff, Power, RotateCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function WireGuardServerConfig() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [selectedNetworkId, setSelectedNetworkId] = useState<number | null>(null);
+  const [showConfirmToggle, setShowConfirmToggle] = useState(false);
+  const [showConfirmRestart, setShowConfirmRestart] = useState(false);
+  const [confirmToggleActive, setConfirmToggleActive] = useState(false);
 
   // Récupérer les réseaux de l'utilisateur
   const { data: networks, isLoading: networksLoading } = trpc.networks.list.useQuery();
@@ -27,6 +30,10 @@ export default function WireGuardServerConfig() {
     { networkId: selectedNetworkId || 0 },
     { enabled: !!selectedNetworkId, refetchInterval: 5000 } // Polling toutes les 5 secondes
   );
+
+  // Mutations pour contrôler le serveur
+  const toggleMutation = trpc.wireguard.toggleNetworkStatus.useMutation();
+  const restartMutation = trpc.wireguard.restartNetwork.useMutation();
 
   if (user?.role !== "admin") {
     return (
@@ -60,6 +67,42 @@ export default function WireGuardServerConfig() {
 
   const handleLoadConfig = (networkId: number) => {
     setSelectedNetworkId(networkId);
+  };
+
+  const handleToggleServer = async (shouldActivate: boolean) => {
+    setConfirmToggleActive(shouldActivate);
+    setShowConfirmToggle(true);
+  };
+
+  const confirmToggle = async () => {
+    if (!selectedNetworkId) return;
+    setShowConfirmToggle(false);
+    try {
+      await toggleMutation.mutateAsync({
+        networkId: selectedNetworkId,
+        isActive: confirmToggleActive,
+      });
+      toast.success(confirmToggleActive ? "Serveur activé !" : "Serveur désactivé !");
+      refetchStatus();
+    } catch (error) {
+      toast.error("Erreur lors de la modification du statut");
+    }
+  };
+
+  const handleRestartServer = async () => {
+    setShowConfirmRestart(true);
+  };
+
+  const confirmRestart = async () => {
+    if (!selectedNetworkId) return;
+    setShowConfirmRestart(false);
+    try {
+      await restartMutation.mutateAsync({ networkId: selectedNetworkId });
+      toast.success("Serveur redémarré avec succès !");
+      refetchStatus();
+    } catch (error) {
+      toast.error("Erreur lors du redémarrage du serveur");
+    }
   };
 
   const serverConfig = configData?.config || "";
@@ -149,6 +192,36 @@ export default function WireGuardServerConfig() {
                 <p className="text-xs text-muted-foreground mb-1">Appareils Totaux</p>
                 <p className="text-sm font-semibold neon-cyan">{totalDevices}</p>
               </div>
+            </div>
+
+            {/* Boutons de contrôle */}
+            <div className="flex gap-3 mt-6 pt-6 border-t border-white/10">
+              <Button
+                onClick={() => handleToggleServer(!isActive)}
+                disabled={toggleMutation.isPending || !isConfigured}
+                variant={isActive ? "destructive" : "default"}
+                className="gap-2 flex-1"
+              >
+                {toggleMutation.isPending ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Power className="w-4 h-4" />
+                )}
+                {isActive ? "Désactiver" : "Activer"}
+              </Button>
+              <Button
+                onClick={handleRestartServer}
+                disabled={restartMutation.isPending || !isActive}
+                variant="outline"
+                className="gap-2 flex-1"
+              >
+                {restartMutation.isPending ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCw className="w-4 h-4" />
+                )}
+                Redémarrer
+              </Button>
             </div>
           </Card>
         )}
@@ -336,6 +409,76 @@ export default function WireGuardServerConfig() {
             </TabsContent>
           </Tabs>
         </Card>
+
+        {/* Confirmation Dialog - Toggle */}
+        {showConfirmToggle && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="p-6 max-w-sm border-cyan-500/30 bg-slate-900">
+              <h2 className="text-xl font-bold neon-cyan mb-4">
+                {confirmToggleActive ? "Activer" : "Désactiver"} le serveur ?
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                {confirmToggleActive
+                  ? "Cela va activer le serveur WireGuard et rendre le VPN accessible."
+                  : "Cela va désactiver le serveur WireGuard et couper toutes les connexions VPN."}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowConfirmToggle(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={confirmToggle}
+                  disabled={toggleMutation.isPending}
+                  variant={confirmToggleActive ? "default" : "destructive"}
+                  className="flex-1"
+                >
+                  {toggleMutation.isPending ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    confirmToggleActive ? "Activer" : "Désactiver"
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Confirmation Dialog - Restart */}
+        {showConfirmRestart && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="p-6 max-w-sm border-cyan-500/30 bg-slate-900">
+              <h2 className="text-xl font-bold neon-cyan mb-4">Redémarrer le serveur ?</h2>
+              <p className="text-muted-foreground mb-6">
+                Le serveur WireGuard va être redémarré. Les connexions VPN actives seront interrompues temporairement.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowConfirmRestart(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={confirmRestart}
+                  disabled={restartMutation.isPending}
+                  variant="default"
+                  className="flex-1"
+                >
+                  {restartMutation.isPending ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Redémarrer"
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
