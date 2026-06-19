@@ -33,7 +33,7 @@ const menuItems = [
   { icon: Wifi, label: "Réseaux", path: "/networks" },
   { icon: Users, label: "Appareils", path: "/devices" },
   { icon: Users, label: "Groupes", path: "/groups" },
-  { icon: Globe, label: "Client VPN", path: "/vpn-client" },
+  { icon: Globe, label: "Ma Config VPN", path: "/vpn-config" },
   { icon: Gauge, label: "Test Vitesse", path: "/speed-test" },
   { icon: Bell, label: "Historique", path: "/history" },
   { icon: Lock, label: "Sécurité", path: "/settings" },
@@ -42,6 +42,7 @@ const menuItems = [
 
 const adminMenuItems = [
   { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
+  { icon: Wifi, label: "Config WireGuard", path: "/wireguard-server" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

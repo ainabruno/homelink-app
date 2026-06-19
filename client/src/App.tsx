@@ -16,6 +16,8 @@ import VPNClient from "./pages/VPNClient";
 import NetworkSpeedTest from "./pages/NetworkSpeedTest";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
+import WireGuardServerConfig from "./pages/WireGuardServerConfig";
+import VPNClientConfig from "./pages/VPNClientConfig";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -47,6 +49,28 @@ function Router() {
             component={() => (
               <DashboardLayout>
                 <AdminDashboard />
+              </DashboardLayout>
+            )}
+          />
+        )}
+      </Route>
+      <Route path="/wireguard-server">
+        {() => (
+          <ProtectedRoute
+            component={() => (
+              <DashboardLayout>
+                <WireGuardServerConfig />
+              </DashboardLayout>
+            )}
+          />
+        )}
+      </Route>
+      <Route path="/vpn-config">
+        {() => (
+          <ProtectedRoute
+            component={() => (
+              <DashboardLayout>
+                <VPNClientConfig />
               </DashboardLayout>
             )}
           />

@@ -143,5 +143,15 @@
 - [x] Ajouter le lien Admin Panel au menu du DashboardLayout
 - [x] Implémenter les notifications de connexion/déconnexion pour l'admin
 - [x] Ajouter les notifications lors du login/logout OAuth
-- [ ] Tester les notifications avec 2 comptes (admin et client)
-- [ ] Implémenter la gestion automatique WireGuard
+- [x] Tester les notifications avec 2 comptes (admin et client)
+- [x] Implémenter la gestion automatique WireGuard
+
+## Phase 17: Gestion Automatique WireGuard
+- [x] Créer la page WireGuardServerConfig pour l'admin
+- [x] Générer les configurations serveur WireGuard
+- [x] Ajouter les boutons Copier et Télécharger
+- [x] Créer le guide complet d'installation
+- [x] Créer la page VPNClientConfig pour les utilisateurs
+- [x] Générer les configurations client WireGuard
+- [x] Ajouter les guides d'installation pour téléphone et ordinateur
+- [x] Ajouter les liens aux menus respectifs
