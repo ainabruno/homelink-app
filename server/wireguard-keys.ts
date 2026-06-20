@@ -54,17 +54,8 @@ export function generateServerConfig(
   vpnSubnet: string,
   peers: Array<{ publicKey: string; allowedIp: string }>
 ): string {
-<<<<<<< Updated upstream
-  // Extraire le réseau de base et générer l'IP serveur correctement
-  // Ex: 10.191.143.0/24 -> 10.191.143.1
-  const baseNetwork = vpnSubnet.split("/")[0];
-  const parts = baseNetwork.split(".");
-  parts[3] = "1";
-  const serverIp = parts.join(".");
-=======
   const baseNetwork = vpnSubnet.split("/")[0];
   const serverIp = baseNetwork.replace(/\.0$/, ".1");
->>>>>>> Stashed changes
 
   let config = `[Interface]
 Address = ${serverIp}
