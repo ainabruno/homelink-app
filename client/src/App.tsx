@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import WireGuardServerConfig from "./pages/WireGuardServerConfig";
 import VPNClientConfig from "./pages/VPNClientConfig";
 import AdminACLManagement from "./pages/AdminACLManagement";
+import AdminMonitoring from "./pages/AdminMonitoring";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -72,6 +73,17 @@ function Router() {
             component={() => (
               <DashboardLayout>
                 <AdminACLManagement />
+              </DashboardLayout>
+            )}
+          />
+        )}
+      </Route>
+      <Route path="/admin/monitoring">
+        {() => (
+          <ProtectedRoute
+            component={() => (
+              <DashboardLayout>
+                <AdminMonitoring />
               </DashboardLayout>
             )}
           />

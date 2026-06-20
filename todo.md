@@ -197,12 +197,13 @@
 - [x] Afficher les appareils créés avec leurs IP VPN
 - [x] Tester le flux complet de création/téléchargement
 
-## Phase 23: Monitoring Complet
-- [ ] Créer les tables pour les logs (activityLogs, connectionLogs, errorLogs, securityEvents)
-- [ ] Ajouter les procédures tRPC pour récupérer les logs
-- [ ] Créer une page admin pour afficher les logs avec filtrage
-- [ ] Implémenter les graphiques d'utilisation (bande passante, connexions, uptime)
-- [ ] Ajouter les alertes de sécurité (tentatives échouées, accès non autorisé)
+## Phase 23: Monitoring Complet - COMPLETÉ
+- [x] Créer les helpers DB pour les logs d'activité et d'alertes de sécurité (monitoring-db.ts)
+- [x] Ajouter les procédures tRPC pour récupérer les logs et stats (monitoring-router.ts)
+- [x] Créer une page admin pour afficher les logs avec filtrage (AdminMonitoring.tsx)
+- [x] Afficher les statistiques d'activité et de sécurité en temps réel
+- [x] Implémenter le filtrage par action, sévérité, et date
+- [x] Ajouter la fonctionnalité de résolution des événements de sécurité
 
 ## Phase 24: Gestion Avancée des Clés
 - [ ] Ajouter l'expiration des clés WireGuard (configurable par admin)

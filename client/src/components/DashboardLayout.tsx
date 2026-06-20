@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Bell, Wifi, Lock, Globe, Gauge } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Bell, Wifi, Lock, Globe, Gauge, Activity } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -44,6 +44,7 @@ const adminMenuItems = [
   { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
   { icon: Wifi, label: "Config WireGuard", path: "/wireguard-server" },
   { icon: Lock, label: "ACL Management", path: "/admin/acl" },
+  { icon: Activity, label: "Monitoring", path: "/admin/monitoring" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -49,6 +49,7 @@ import {
   getQualityRating,
 } from "./speedtest";
 import { permissionsRouter } from "./permissions-router";
+import { monitoringRouter } from "./monitoring-router";
 import { deviceGroupsRouter } from "./groups";
 import {
   createDeviceGroup,
@@ -791,6 +792,7 @@ export const appRouter = router({
 
   acl: aclRouter,
   permissions: permissionsRouter,
+  monitoring: monitoringRouter,
   deviceGroups: deviceGroupsRouter,
 
   admin: router({
