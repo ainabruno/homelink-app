@@ -10,9 +10,10 @@ import {
   reactivateDeviceAccess,
   updateDeviceLastConnected,
 } from "./wireguard-db";
-import { getDb } from "./db";
+import { getDb, createLog } from "./db";
 import { networks, devices } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { checkDevicePermission } from "./permissions-db";
 
 export const wireguardRouter = router({
   /**
@@ -111,6 +112,25 @@ export const wireguardRouter = router({
 
         if (!network || network.userId !== ctx.user?.id) {
           throw new Error("Unauthorized");
+        }
+
+        // Vérifier la permission de l'utilisateur sur l'appareil
+        const hasPermission = await checkDevicePermission(
+          ctx.user.id,
+          input.deviceId,
+          "connect"
+        );
+
+        if (!hasPermission) {
+          // Enregistrer l'accès refusé
+          await createLog({
+            userId: ctx.user.id,
+            networkId: network.id,
+            action: "device_config_access_denied",
+            details: `User attempted to access device config without permission: ${device.name}`,
+            status: "warning",
+          });
+          throw new Error("Access denied: insufficient permissions");
         }
 
         const config = await getDeviceClientConfig(input.deviceId);

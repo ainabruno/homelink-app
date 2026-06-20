@@ -43,6 +43,7 @@ const menuItems = [
 const adminMenuItems = [
   { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
   { icon: Wifi, label: "Config WireGuard", path: "/wireguard-server" },
+  { icon: Lock, label: "ACL Management", path: "/admin/acl" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

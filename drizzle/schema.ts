@@ -440,6 +440,48 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
 
 
 /**
+ * Device Permissions table: Permissions par appareil
+ * Stocke les permissions d'accès pour chaque appareil
+ */
+export const devicePermissions = mysqlTable("devicePermissions", {
+  id: int("id").autoincrement().primaryKey(),
+  deviceId: int("deviceId").notNull().references(() => devices.id, { onDelete: "cascade" }),
+  userId: int("userId").references(() => users.id, { onDelete: "cascade" }),
+  groupId: int("groupId").references(() => deviceGroups.id, { onDelete: "cascade" }),
+  permission: mysqlEnum("permission", ["view", "connect", "configure", "admin"]).notNull().default("view"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  deviceIdIdx: index("idx_devicePermissions_deviceId").on(table.deviceId),
+  userIdIdx: index("idx_devicePermissions_userId").on(table.userId),
+  groupIdIdx: index("idx_devicePermissions_groupId").on(table.groupId),
+}));
+
+export type DevicePermission = typeof devicePermissions.$inferSelect;
+export type InsertDevicePermission = typeof devicePermissions.$inferInsert;
+
+/**
+ * Group Permissions table: Permissions par groupe
+ * Stocke les permissions d'accès pour chaque groupe d'appareils
+ */
+export const groupPermissions = mysqlTable("groupPermissions", {
+  id: int("id").autoincrement().primaryKey(),
+  groupId: int("groupId").notNull().references(() => deviceGroups.id, { onDelete: "cascade" }),
+  userId: int("userId").references(() => users.id, { onDelete: "cascade" }),
+  permission: mysqlEnum("permission", ["view", "connect", "configure", "admin"]).notNull().default("view"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  groupIdIdx: index("idx_groupPermissions_groupId").on(table.groupId),
+  userIdIdx: index("idx_groupPermissions_userId").on(table.userId),
+}));
+
+export type GroupPermission = typeof groupPermissions.$inferSelect;
+export type InsertGroupPermission = typeof groupPermissions.$inferInsert;
+
+/**
  * Access Control Rules table: Règles d'accès (ACL)
  * Définit qui peut accéder à quoi dans le réseau
  */
@@ -547,5 +589,31 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   network: one(networks, {
     fields: [activityLogs.networkId],
     references: [networks.id],
+  }),
+}));
+
+export const devicePermissionsRelations = relations(devicePermissions, ({ one }) => ({
+  device: one(devices, {
+    fields: [devicePermissions.deviceId],
+    references: [devices.id],
+  }),
+  user: one(users, {
+    fields: [devicePermissions.userId],
+    references: [users.id],
+  }),
+  group: one(deviceGroups, {
+    fields: [devicePermissions.groupId],
+    references: [deviceGroups.id],
+  }),
+}));
+
+export const groupPermissionsRelations = relations(groupPermissions, ({ one }) => ({
+  group: one(deviceGroups, {
+    fields: [groupPermissions.groupId],
+    references: [deviceGroups.id],
+  }),
+  user: one(users, {
+    fields: [groupPermissions.userId],
+    references: [users.id],
   }),
 }));

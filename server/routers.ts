@@ -48,6 +48,7 @@ import {
   getSpeedTestStats,
   getQualityRating,
 } from "./speedtest";
+import { permissionsRouter } from "./permissions-router";
 import { deviceGroupsRouter } from "./groups";
 import {
   createDeviceGroup,
@@ -789,7 +790,7 @@ export const appRouter = router({
   wireguard: wireguardRouter,
 
   acl: aclRouter,
-
+  permissions: permissionsRouter,
   deviceGroups: deviceGroupsRouter,
 
   admin: router({

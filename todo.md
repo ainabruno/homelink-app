@@ -180,42 +180,52 @@
 - [x] Ajouter les notifications toast pour les résultats
 - [x] Gérer les états de chargement des boutons
 
-## Phase 21: Système ACL (Access Control List)
-- [ ] Créer les tables pour les ACL (accessControlRules, devicePermissions, groupPermissions)
-- [ ] Ajouter les procédures tRPC pour gérer les ACL
-- [ ] Créer une page admin pour configurer les ACL
-- [ ] Implémenter la vérification des permissions avant la connexion VPN
-- [ ] Ajouter les tests vitest pour les ACL
+## Phase 21: Système ACL (Access Control List) - COMPLETÉ
+- [x] Créer les tables devicePermissions et groupPermissions dans le schéma
+- [x] Générer et appliquer la migration SQL pour les nouvelles tables
+- [x] Créer les helpers DB pour gérer les permissions (permissions-db.ts)
+- [x] Créer les procédures tRPC pour l'admin ACL (permissions-router.ts)
+- [x] Créer la page admin AdminACLManagement pour configurer les ACL
+- [x] Intégrer la vérification des permissions au flux WireGuard (getDeviceConfig)
+- [x] Ajouter le lien ACL Management au menu admin du sidebar
+- [x] Ajouter les tests vitest pour les permissions ACL (permissions.test.ts)
 
-## Phase 22: Monitoring Complet
+## Phase 22: Correction Critique des Configurations WireGuard
+- [x] Corriger la génération de l'IP serveur (10.191.143.1 au lieu de 10.191.143.0.1)
+- [x] Refactoriser VPNClientConfig pour créer de vrais devices
+- [x] Utiliser le backend pour générer les configurations réelles
+- [x] Afficher les appareils créés avec leurs IP VPN
+- [x] Tester le flux complet de création/téléchargement
+
+## Phase 23: Monitoring Complet
 - [ ] Créer les tables pour les logs (activityLogs, connectionLogs, errorLogs, securityEvents)
 - [ ] Ajouter les procédures tRPC pour récupérer les logs
 - [ ] Créer une page admin pour afficher les logs avec filtrage
 - [ ] Implémenter les graphiques d'utilisation (bande passante, connexions, uptime)
 - [ ] Ajouter les alertes de sécurité (tentatives échouées, accès non autorisé)
 
-## Phase 23: Gestion Avancée des Clés
+## Phase 24: Gestion Avancée des Clés
 - [ ] Ajouter l'expiration des clés WireGuard (configurable par admin)
 - [ ] Implémenter la rotation automatique des clés
 - [ ] Créer les procédures tRPC pour gérer l'expiration
 - [ ] Ajouter les notifications avant expiration (7 jours, 1 jour)
 - [ ] Implémenter la révocation manuelle des clés
 
-## Phase 24: Authentification Sécurisée (MFA)
+## Phase 25: Authentification Sécurisée (MFA)
 - [ ] Ajouter TOTP (Time-based One-Time Password) avec speakeasy
 - [ ] Créer une page pour configurer MFA (activation/désactivation)
 - [ ] Implémenter la vérification TOTP lors du login
 - [ ] Ajouter les codes de secours (10 codes)
 - [ ] Tester MFA avec Google Authenticator et Authy
 
-## Phase 25: Fonctionnalités Avancées
+## Phase 26: Fonctionnalités Avancées
 - [ ] Implémenter les Subnet Routers (étendre le réseau)
 - [ ] Implémenter les Exit Nodes (trafic internet via VPN)
 - [ ] Ajouter la gestion des routes statiques
 - [ ] Implémenter les webhooks pour intégrations externes
 - [ ] Ajouter le support des tags pour les appareils
 
-## Phase 26: Tests et Optimisations Finales
+## Phase 27: Tests et Optimisations Finales
 - [ ] Tests complets de sécurité (ACL, permissions, MFA)
 - [ ] Tests de performance avec 10 utilisateurs
 - [ ] Optimisation des requêtes tRPC
